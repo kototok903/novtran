@@ -1,48 +1,52 @@
-import { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
-import { toast } from 'sonner'
-import { Breadcrumbs } from '@/components/ui/breadcrumbs'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { LanguageSelect } from '@/components/language-select'
-import { useSettings } from '@/hooks/use-settings'
-import { getApiKeys, saveApiKeys } from '@/lib/settings'
-import type { ApiKeys } from '@/lib/types'
-import { ModelSelect } from '@/components/model-select'
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LanguageSelect } from "@/components/language-select";
+import { useSettings } from "@/hooks/use-settings";
+import { getApiKeys, saveApiKeys } from "@/lib/settings";
+import type { ApiKeys } from "@/lib/types";
+import { ModelSelect } from "@/components/model-select";
 
 const PROVIDERS: { key: keyof ApiKeys; label: string }[] = [
-  { key: 'google', label: 'Google (Gemini)' },
-  { key: 'anthropic', label: 'Anthropic (Claude)' },
-  { key: 'openai', label: 'OpenAI' },
-]
+  { key: "google", label: "Google (Gemini)" },
+  { key: "anthropic", label: "Anthropic (Claude)" },
+  { key: "openai", label: "OpenAI" },
+];
 
 export function SettingsPage() {
-  const [settings, setSettings] = useSettings()
-  const [apiKeys, setApiKeysState] = useState<ApiKeys>(getApiKeys)
-  const [visible, setVisible] = useState<Record<string, boolean>>({})
+  const [settings, setSettings] = useSettings();
+  const [apiKeys, setApiKeysState] = useState<ApiKeys>(getApiKeys);
+  const [visible, setVisible] = useState<Record<string, boolean>>({});
 
   function handleApiKeyChange(provider: keyof ApiKeys, value: string) {
-    setApiKeysState((prev) => ({ ...prev, [provider]: value }))
+    setApiKeysState((prev) => ({ ...prev, [provider]: value }));
   }
 
   function handleSave() {
-    saveApiKeys(apiKeys)
-    toast.success('Settings saved')
+    saveApiKeys(apiKeys);
+    toast.success("Settings saved");
   }
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-surface px-6 py-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <Breadcrumbs items={[{ label: 'Projects', to: '/' }, { label: 'Settings' }]} />
+          <Breadcrumbs
+            items={[{ label: "Projects", to: "/" }, { label: "Settings" }]}
+          />
         </div>
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-8 flex flex-col gap-10">
         {/* API Keys */}
         <section>
-          <h2 className="mb-4 text-sm font-medium text-muted-foreground">API Keys</h2>
+          <h2 className="mb-4 text-sm font-medium text-muted-foreground">
+            API Keys
+          </h2>
           <div className="flex flex-col gap-4">
             {PROVIDERS.map(({ key, label }) => (
               <div key={key} className="flex flex-col gap-2">
@@ -50,15 +54,17 @@ export function SettingsPage() {
                 <div className="flex gap-2">
                   <Input
                     id={key}
-                    type={visible[key] ? 'text' : 'password'}
-                    value={apiKeys[key] ?? ''}
+                    type={visible[key] ? "text" : "password"}
+                    value={apiKeys[key] ?? ""}
                     onChange={(e) => handleApiKeyChange(key, e.target.value)}
                     placeholder={`Enter ${label} API key`}
                   />
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setVisible((v) => ({ ...v, [key]: !v[key] }))}
+                    onClick={() =>
+                      setVisible((v) => ({ ...v, [key]: !v[key] }))
+                    }
                   >
                     {visible[key] ? <EyeOff /> : <Eye />}
                   </Button>
@@ -70,11 +76,15 @@ export function SettingsPage() {
 
         {/* Defaults */}
         <section>
-          <h2 className="mb-4 text-sm font-medium text-muted-foreground">Defaults</h2>
+          <h2 className="mb-4 text-sm font-medium text-muted-foreground">
+            Defaults
+          </h2>
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="defaultSourceLang">Default Source Language</Label>
+                <Label htmlFor="defaultSourceLang">
+                  Default Source Language
+                </Label>
                 <LanguageSelect
                   id="defaultSourceLang"
                   value={settings.defaultSourceLang}
@@ -82,7 +92,9 @@ export function SettingsPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="defaultTargetLang">Default Target Language</Label>
+                <Label htmlFor="defaultTargetLang">
+                  Default Target Language
+                </Label>
                 <LanguageSelect
                   id="defaultTargetLang"
                   value={settings.defaultTargetLang}
@@ -106,5 +118,5 @@ export function SettingsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

@@ -1,8 +1,8 @@
-import { Link } from 'react-router'
+import { Link } from "react-router";
 
 interface BreadcrumbItem {
-  label: string
-  to?: string
+  label: string;
+  to?: string;
 }
 
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
@@ -12,7 +12,10 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
         <span key={i} className="flex items-center gap-1.5">
           {i > 0 && <span className="text-muted-foreground">/</span>}
           {item.to ? (
-            <Link to={item.to} className="text-muted-foreground hover:text-foreground">
+            <Link
+              to={item.to}
+              className="text-muted-foreground hover:text-foreground"
+            >
               {item.label}
             </Link>
           ) : (
@@ -21,5 +24,5 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
         </span>
       ))}
     </nav>
-  )
+  );
 }

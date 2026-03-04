@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Breadcrumbs } from '@/components/ui/breadcrumbs'
-import { Textarea } from '@/components/ui/textarea'
-import type { Chunk, Project } from '@/lib/types'
-import { getProject, saveProject } from '@/lib/db'
-import { useSettings } from '@/hooks/use-settings'
-import { translateChunk } from '@/lib/translate'
-import { toast } from 'sonner'
+import { useCallback, useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Textarea } from "@/components/ui/textarea";
+import type { Chunk, Project } from "@/lib/types";
+import { getProject, saveProject } from "@/lib/db";
+import { useSettings } from "@/hooks/use-settings";
+import { translateChunk } from "@/lib/translate";
+import { toast } from "sonner";
 import {
   Sun,
   Moon,
@@ -22,79 +22,83 @@ import {
   ChevronUp,
   Wrench,
   X,
-} from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { cn } from '@/lib/utils'
+} from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import { cn } from "@/lib/utils";
 
-type BottomTab = 'notes' | 'context' | 'prompt'
+type BottomTab = "notes" | "context" | "prompt";
 
 export function WorkspacePage() {
-  const { id } = useParams<{ id: string }>()
-  const [settings, setSettings] = useSettings()
-  const [project, setProject] = useState<Project | null>(null)
-  const [chunkIndex, setChunkIndex] = useState(0)
-  const [sourceInput, setSourceInput] = useState('')
-  const [editingTranslation, setEditingTranslation] = useState(false)
-  const [translationDraft, setTranslationDraft] = useState('')
-  const [bottomTab, setBottomTab] = useState<BottomTab>('notes')
-  const [panelCollapsed, setPanelCollapsed] = useState(false)
-  const [editingNotes, setEditingNotes] = useState(false)
-  const [notesDraft, setNotesDraft] = useState('')
-  const [editingContext, setEditingContext] = useState(false)
-  const [contextDraft, setContextDraft] = useState('')
-  const [translating, setTranslating] = useState(false)
+  const { id } = useParams<{ id: string }>();
+  const [settings, setSettings] = useSettings();
+  const [project, setProject] = useState<Project | null>(null);
+  const [chunkIndex, setChunkIndex] = useState(0);
+  const [sourceInput, setSourceInput] = useState("");
+  const [editingTranslation, setEditingTranslation] = useState(false);
+  const [translationDraft, setTranslationDraft] = useState("");
+  const [bottomTab, setBottomTab] = useState<BottomTab>("notes");
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
+  const [editingContext, setEditingContext] = useState(false);
+  const [contextDraft, setContextDraft] = useState("");
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
-    if (id) getProject(id).then((p) => setProject(p ?? null))
-  }, [id])
+    if (id) getProject(id).then((p) => setProject(p ?? null));
+  }, [id]);
 
-  const chunk: Chunk | undefined = project?.chunks[chunkIndex]
-  const totalChunks = project?.chunks.length ?? 0
+  const chunk: Chunk | undefined = project?.chunks[chunkIndex];
+  const totalChunks = project?.chunks.length ?? 0;
 
   const persist = useCallback(async (updated: Project) => {
-    const withTimestamp = { ...updated, updatedAt: new Date().toISOString() }
-    await saveProject(withTimestamp)
-    setProject(withTimestamp)
-  }, [])
+    const withTimestamp = { ...updated, updatedAt: new Date().toISOString() };
+    await saveProject(withTimestamp);
+    setProject(withTimestamp);
+  }, []);
 
   async function handleAddChunk() {
-    if (!project || !sourceInput.trim()) return
+    if (!project || !sourceInput.trim()) return;
     const newChunk: Chunk = {
       sourceText: sourceInput.trim(),
-      translatedText: '',
-      status: 'pending',
-    }
-    const updated = { ...project, chunks: [...project.chunks, newChunk] }
-    await persist(updated)
-    setChunkIndex(updated.chunks.length - 1)
-    setSourceInput('')
+      translatedText: "",
+      status: "pending",
+    };
+    const updated = { ...project, chunks: [...project.chunks, newChunk] };
+    await persist(updated);
+    setChunkIndex(updated.chunks.length - 1);
+    setSourceInput("");
   }
 
   async function handleSaveTranslation() {
-    if (!project || !chunk) return
-    const chunks = [...project.chunks]
-    chunks[chunkIndex] = { ...chunk, translatedText: translationDraft }
-    await persist({ ...project, chunks })
-    setEditingTranslation(false)
+    if (!project || !chunk) return;
+    const chunks = [...project.chunks];
+    chunks[chunkIndex] = { ...chunk, translatedText: translationDraft };
+    await persist({ ...project, chunks });
+    setEditingTranslation(false);
   }
 
   async function handleSaveNotes() {
-    if (!project) return
-    await persist({ ...project, notes: notesDraft })
-    setEditingNotes(false)
+    if (!project) return;
+    await persist({ ...project, notes: notesDraft });
+    setEditingNotes(false);
   }
 
   async function handleSaveContext() {
-    if (!project) return
-    await persist({ ...project, context: contextDraft })
-    setEditingContext(false)
+    if (!project) return;
+    await persist({ ...project, context: contextDraft });
+    setEditingContext(false);
   }
 
   async function handleTranslate() {
-    if (!project || !chunk) return
-    setTranslating(true)
+    if (!project || !chunk) return;
+    setTranslating(true);
     try {
       const result = await translateChunk({
         sourceText: chunk.sourceText,
@@ -103,39 +107,39 @@ export function WorkspacePage() {
         sourceLang: project.sourceLang,
         targetLang: project.targetLang,
         model: project.model,
-      })
-      const chunks = [...project.chunks]
+      });
+      const chunks = [...project.chunks];
       chunks[chunkIndex] = {
         ...chunk,
         translatedText: result.translation,
-        status: 'translated',
-      }
-      await persist({ ...project, chunks, notes: result.notes })
-      toast.success('Chunk translated')
+        status: "translated",
+      };
+      await persist({ ...project, chunks, notes: result.notes });
+      toast.success("Chunk translated");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Translation failed')
+      toast.error(e instanceof Error ? e.message : "Translation failed");
     } finally {
-      setTranslating(false)
+      setTranslating(false);
     }
   }
 
   function buildPrompt(): string {
-    if (!project) return ''
-    const source = chunk?.sourceText ?? sourceInput
+    if (!project) return "";
+    const source = chunk?.sourceText ?? sourceInput;
     return `System: You are a literary translator. Translate from ${project.sourceLang} to ${project.targetLang}.
 
-${project.context ? `${project.context}\n` : ''}Here are your accumulated notes about this text:
-${project.notes || '(no notes yet)'}
+${project.context ? `${project.context}\n` : ""}Here are your accumulated notes about this text:
+${project.notes || "(no notes yet)"}
 
 Translate the following text. Return:
 1. The translation
 2. Updated notes — rewrite the full notes block. Preserve all existing notes. Only add or modify entries, never remove unless explicitly asked.
 
 Source text:
-${source}`
+${source}`;
   }
 
-  if (!project) return null
+  if (!project) return null;
 
   const sourceTranslationPanels = (
     <>
@@ -148,7 +152,9 @@ ${source}`
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {chunk ? (
-            <div className="font-prose text-prose p-5 whitespace-pre-wrap">{chunk.sourceText}</div>
+            <div className="font-prose text-prose p-5 whitespace-pre-wrap">
+              {chunk.sourceText}
+            </div>
           ) : (
             <div className="flex h-full flex-col gap-3">
               <Textarea
@@ -187,7 +193,11 @@ ${source}`
                   >
                     <X className="size-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => handleSaveTranslation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => handleSaveTranslation()}
+                  >
                     <Check className="size-3.5" />
                   </Button>
                 </>
@@ -196,8 +206,8 @@ ${source}`
                   variant="ghost"
                   size="icon-xs"
                   onClick={() => {
-                    setTranslationDraft(chunk.translatedText)
-                    setEditingTranslation(true)
+                    setTranslationDraft(chunk.translatedText);
+                    setEditingTranslation(true);
                   }}
                 >
                   <Pencil className="size-3.5" />
@@ -219,20 +229,24 @@ ${source}`
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {chunk ? 'Translation will appear here after you press Translate.' : ''}
+              {chunk
+                ? "Translation will appear here after you press Translate."
+                : ""}
             </p>
           )}
         </div>
       </div>
     </>
-  )
+  );
 
   return (
     <div className="flex h-screen flex-col bg-background">
       {/* Top Bar */}
       <header className="flex shrink-0 items-center justify-between border-b border-border bg-surface h-12 px-4">
         <div className="flex items-center gap-3">
-          <Breadcrumbs items={[{ label: 'Projects', to: '/' }, { label: project.name }]} />
+          <Breadcrumbs
+            items={[{ label: "Projects", to: "/" }, { label: project.name }]}
+          />
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon-sm" asChild>
               <Link to={`/project/${id}/settings`}>
@@ -258,11 +272,15 @@ ${source}`
             onClick={() =>
               setSettings((prev) => ({
                 ...prev,
-                theme: prev.theme === 'light' ? 'dark' : 'light',
+                theme: prev.theme === "light" ? "dark" : "light",
               }))
             }
           >
-            {settings.theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {settings.theme === "dark" ? (
+              <Sun className="size-4" />
+            ) : (
+              <Moon className="size-4" />
+            )}
           </Button>
         </div>
       </header>
@@ -280,10 +298,12 @@ ${source}`
         </Button>
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium">
-            {totalChunks === 0 ? 'No chunks' : `Chunk ${chunkIndex + 1}`}
+            {totalChunks === 0 ? "No chunks" : `Chunk ${chunkIndex + 1}`}
           </span>
           {totalChunks > 0 && (
-            <span className="text-xs text-muted-foreground">of {totalChunks}</span>
+            <span className="text-xs text-muted-foreground">
+              of {totalChunks}
+            </span>
           )}
         </div>
 
@@ -301,11 +321,11 @@ ${source}`
             <span className="text-xs text-muted-foreground">Status:</span>
             <Badge
               variant={
-                chunk.status === 'translated'
-                  ? 'success'
-                  : chunk.status === 'reviewed'
-                    ? 'accent'
-                    : 'outline'
+                chunk.status === "translated"
+                  ? "success"
+                  : chunk.status === "reviewed"
+                    ? "accent"
+                    : "outline"
               }
               className="capitalize"
             >
@@ -315,8 +335,13 @@ ${source}`
         )}
         <div className="ml-auto flex items-center gap-2">
           {chunk?.translatedText && (
-            <Button variant="outline" size="sm" disabled={translating} onClick={handleTranslate}>
-              {translating ? 'Translating...' : 'Re-translate'}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={translating}
+              onClick={handleTranslate}
+            >
+              {translating ? "Translating..." : "Re-translate"}
             </Button>
           )}
           <Button
@@ -325,7 +350,7 @@ ${source}`
             disabled={!chunk || translating}
             onClick={handleTranslate}
           >
-            {translating ? 'Translating...' : 'Translate'}
+            {translating ? "Translating..." : "Translate"}
           </Button>
         </div>
       </div>
@@ -339,9 +364,14 @@ ${source}`
         {panelCollapsed ? (
           <div className="flex flex-1 min-h-0">{sourceTranslationPanels}</div>
         ) : (
-          <ResizablePanelGroup orientation="vertical" className="flex-1 min-h-0">
+          <ResizablePanelGroup
+            orientation="vertical"
+            className="flex-1 min-h-0"
+          >
             <ResizablePanel defaultSize="75%" minSize="40%">
-              <div className="flex h-full min-h-0">{sourceTranslationPanels}</div>
+              <div className="flex h-full min-h-0">
+                {sourceTranslationPanels}
+              </div>
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize="25%" minSize="10%" maxSize="50%">
@@ -352,18 +382,18 @@ ${source}`
                 panelCollapsed={panelCollapsed}
                 onToggleEditNotes={() => {
                   if (editingNotes) {
-                    handleSaveNotes()
+                    handleSaveNotes();
                   } else {
-                    setNotesDraft(project.notes)
-                    setEditingNotes(true)
+                    setNotesDraft(project.notes);
+                    setEditingNotes(true);
                   }
                 }}
                 onToggleEditContext={() => {
                   if (editingContext) {
-                    handleSaveContext()
+                    handleSaveContext();
                   } else {
-                    setContextDraft(project.context)
-                    setEditingContext(true)
+                    setContextDraft(project.context);
+                    setEditingContext(true);
                   }
                 }}
                 onToggleCollapse={() => setPanelCollapsed((c) => !c)}
@@ -383,8 +413,8 @@ ${source}`
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      Notes will be populated by the AI after translation, or you can add them
-                      manually.
+                      Notes will be populated by the AI after translation, or
+                      you can add them manually.
                     </p>
                   )}
                 </TabsContent>
@@ -402,7 +432,8 @@ ${source}`
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      No context set. Add translation instructions in Project Settings.
+                      No context set. Add translation instructions in Project
+                      Settings.
                     </p>
                   )}
                 </TabsContent>
@@ -429,18 +460,18 @@ ${source}`
             panelCollapsed={panelCollapsed}
             onToggleEditNotes={() => {
               if (editingNotes) {
-                handleSaveNotes()
+                handleSaveNotes();
               } else {
-                setNotesDraft(project.notes)
-                setEditingNotes(true)
+                setNotesDraft(project.notes);
+                setEditingNotes(true);
               }
             }}
             onToggleEditContext={() => {
               if (editingContext) {
-                handleSaveContext()
+                handleSaveContext();
               } else {
-                setContextDraft(project.context)
-                setEditingContext(true)
+                setContextDraft(project.context);
+                setEditingContext(true);
               }
             }}
             onToggleCollapse={() => setPanelCollapsed((c) => !c)}
@@ -448,18 +479,18 @@ ${source}`
         )}
       </Tabs>
     </div>
-  )
+  );
 }
 
 type BottomTabBarProps = {
-  bottomTab: BottomTab
-  editingNotes: boolean
-  editingContext: boolean
-  panelCollapsed: boolean
-  onToggleEditNotes: () => void
-  onToggleEditContext: () => void
-  onToggleCollapse: () => void
-}
+  bottomTab: BottomTab;
+  editingNotes: boolean;
+  editingContext: boolean;
+  panelCollapsed: boolean;
+  onToggleEditNotes: () => void;
+  onToggleEditContext: () => void;
+  onToggleCollapse: () => void;
+};
 
 function BottomTabBar({
   bottomTab,
@@ -471,7 +502,12 @@ function BottomTabBar({
   onToggleCollapse,
 }: BottomTabBarProps) {
   return (
-    <div className={cn('shrink-0 border-b border-border bg-surface', panelCollapsed && 'border-t')}>
+    <div
+      className={cn(
+        "shrink-0 border-b border-border bg-surface",
+        panelCollapsed && "border-t"
+      )}
+    >
       <div className="flex items-center justify-between px-4">
         <TabsList variant="line">
           <TabsTrigger value="notes">Notes</TabsTrigger>
@@ -479,14 +515,26 @@ function BottomTabBar({
           <TabsTrigger value="prompt">Prompt</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-1">
-          {bottomTab === 'notes' && (
+          {bottomTab === "notes" && (
             <Button variant="ghost" size="icon-xs" onClick={onToggleEditNotes}>
-              {editingNotes ? <Check className="size-3.5" /> : <Pencil className="size-3.5" />}
+              {editingNotes ? (
+                <Check className="size-3.5" />
+              ) : (
+                <Pencil className="size-3.5" />
+              )}
             </Button>
           )}
-          {bottomTab === 'context' && (
-            <Button variant="ghost" size="icon-xs" onClick={onToggleEditContext}>
-              {editingContext ? <Check className="size-3.5" /> : <Pencil className="size-3.5" />}
+          {bottomTab === "context" && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={onToggleEditContext}
+            >
+              {editingContext ? (
+                <Check className="size-3.5" />
+              ) : (
+                <Pencil className="size-3.5" />
+              )}
             </Button>
           )}
           <Button variant="ghost" size="icon-xs" onClick={onToggleCollapse}>
@@ -499,5 +547,5 @@ function BottomTabBar({
         </div>
       </div>
     </div>
-  )
+  );
 }

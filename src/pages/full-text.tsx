@@ -1,47 +1,47 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { Button } from '@/components/ui/button'
-import { Breadcrumbs } from '@/components/ui/breadcrumbs'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
-import type { Project } from '@/lib/types'
-import { getProject } from '@/lib/db'
-import { ThemeSwitcher } from '@/components/theme-switcher'
-import { Settings } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
+import { Button } from "@/components/ui/button";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import type { Project } from "@/lib/types";
+import { getProject } from "@/lib/db";
+import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Settings } from "lucide-react";
 
 export function FullTextPage() {
-  const { id } = useParams<{ id: string }>()
-  const [project, setProject] = useState<Project | null>(null)
-  const [from, setFrom] = useState(1)
-  const [to, setTo] = useState(1)
+  const { id } = useParams<{ id: string }>();
+  const [project, setProject] = useState<Project | null>(null);
+  const [from, setFrom] = useState(1);
+  const [to, setTo] = useState(1);
 
   useEffect(() => {
     if (id)
       getProject(id).then((p) => {
         if (p) {
-          setProject(p)
-          setFrom(1)
-          setTo(p.chunks.length)
+          setProject(p);
+          setFrom(1);
+          setTo(p.chunks.length);
         }
-      })
-  }, [id])
+      });
+  }, [id]);
 
-  if (!project) return null
+  if (!project) return null;
 
-  const totalChunks = project.chunks.length
-  const safeFrom = Math.max(1, Math.min(from, totalChunks))
-  const safeTo = Math.max(safeFrom, Math.min(to, totalChunks))
+  const totalChunks = project.chunks.length;
+  const safeFrom = Math.max(1, Math.min(from, totalChunks));
+  const safeTo = Math.max(safeFrom, Math.min(to, totalChunks));
 
-  const selectedChunks = project.chunks.slice(safeFrom - 1, safeTo)
+  const selectedChunks = project.chunks.slice(safeFrom - 1, safeTo);
   const fullText = selectedChunks
     .map((c) => c.translatedText)
     .filter(Boolean)
-    .join('\n\n')
+    .join("\n\n");
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(fullText)
-    toast.success('Copied to clipboard')
+    await navigator.clipboard.writeText(fullText);
+    toast.success("Copied to clipboard");
   }
 
   return (
@@ -49,9 +49,9 @@ export function FullTextPage() {
       <header className="flex items-center justify-between border-b border-border bg-surface px-4 h-12">
         <Breadcrumbs
           items={[
-            { label: 'Projects', to: '/' },
+            { label: "Projects", to: "/" },
             { label: project.name, to: `/project/${id}` },
-            { label: 'Full Text' },
+            { label: "Full Text" },
           ]}
         />
         <div className="flex items-center gap-1">
@@ -66,8 +66,15 @@ export function FullTextPage() {
 
       <main className="mx-auto max-w-3xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-muted-foreground">Full Text View</h2>
-          <Button variant="outline" size="sm" onClick={handleCopy} disabled={!fullText}>
+          <h2 className="text-sm font-medium text-muted-foreground">
+            Full Text View
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            disabled={!fullText}
+          >
             Copy to Clipboard
           </Button>
         </div>
@@ -99,7 +106,7 @@ export function FullTextPage() {
         {fullText ? (
           <div className="rounded-lg border border-border bg-surface p-8">
             <div className="font-prose text-prose">
-              {fullText.split('\n\n').map((para, i) => (
+              {fullText.split("\n\n").map((para, i) => (
                 <p key={i} className="mb-4">
                   {para}
                 </p>
@@ -110,11 +117,12 @@ export function FullTextPage() {
           <div className="rounded-lg border border-dashed border-border py-16 text-center">
             <p className="text-fg-muted">No translations yet</p>
             <p className="mt-1 text-sm text-fg-dim">
-              Translate some chunks first, then come back here to see the full text
+              Translate some chunks first, then come back here to see the full
+              text
             </p>
           </div>
         )}
       </main>
     </div>
-  )
+  );
 }

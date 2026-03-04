@@ -1,39 +1,39 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
-import { Breadcrumbs } from '@/components/ui/breadcrumbs'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { LanguageSelect } from '@/components/language-select'
-import { ModelSelect } from '@/components/model-select'
-import { toast } from 'sonner'
-import type { Project } from '@/lib/types'
-import { getProject, saveProject } from '@/lib/db'
-import { Settings } from 'lucide-react'
-import { ThemeSwitcher } from '@/components/theme-switcher'
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { LanguageSelect } from "@/components/language-select";
+import { ModelSelect } from "@/components/model-select";
+import { toast } from "sonner";
+import type { Project } from "@/lib/types";
+import { getProject, saveProject } from "@/lib/db";
+import { Settings } from "lucide-react";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export function ProjectSettingsPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const [project, setProject] = useState<Project | null>(null)
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [project, setProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    if (id) getProject(id).then((p) => setProject(p ?? null))
-  }, [id])
+    if (id) getProject(id).then((p) => setProject(p ?? null));
+  }, [id]);
 
-  if (!project) return null
+  if (!project) return null;
 
   function update(fields: Partial<Project>) {
-    setProject((prev) => (prev ? { ...prev, ...fields } : prev))
+    setProject((prev) => (prev ? { ...prev, ...fields } : prev));
   }
 
   async function handleSave() {
-    if (!project) return
-    const updated = { ...project, updatedAt: new Date().toISOString() }
-    await saveProject(updated)
-    setProject(updated)
-    toast.success('Settings saved')
+    if (!project) return;
+    const updated = { ...project, updatedAt: new Date().toISOString() };
+    await saveProject(updated);
+    setProject(updated);
+    toast.success("Settings saved");
   }
 
   return (
@@ -41,9 +41,9 @@ export function ProjectSettingsPage() {
       <header className="flex items-center justify-between border-b border-border bg-surface px-4 h-12">
         <Breadcrumbs
           items={[
-            { label: 'Projects', to: '/' },
+            { label: "Projects", to: "/" },
             { label: project.name, to: `/project/${id}` },
-            { label: 'Settings' },
+            { label: "Settings" },
           ]}
         />
         <div className="flex items-center gap-1">
@@ -57,7 +57,9 @@ export function ProjectSettingsPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-8">
-        <h2 className="mb-6 text-sm font-medium text-muted-foreground">Project Settings</h2>
+        <h2 className="mb-6 text-sm font-medium text-muted-foreground">
+          Project Settings
+        </h2>
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -115,7 +117,10 @@ export function ProjectSettingsPage() {
           <div className="flex items-center gap-3">
             <Button onClick={handleSave}>Save</Button>
             <div className="ml-auto">
-              <Button variant="outline" onClick={() => navigate(`/project/${id}`)}>
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/project/${id}`)}
+              >
                 Go to Workspace
               </Button>
             </div>
@@ -123,5 +128,5 @@ export function ProjectSettingsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

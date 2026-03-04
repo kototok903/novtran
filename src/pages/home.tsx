@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, Link } from 'react-router'
-import { Settings, MoreVertical } from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, Link } from "react-router";
+import { Settings, MoreVertical } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,78 +12,79 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import type { Project } from '@/lib/types'
-import { getProjects, saveProject, deleteProject } from '@/lib/db'
-import { getSettings } from '@/lib/settings'
-import { exportProject, importProject } from '@/lib/import-export'
-import { ThemeSwitcher } from '@/components/theme-switcher'
+} from "@/components/ui/dropdown-menu";
+import type { Project } from "@/lib/types";
+import { getProjects, saveProject, deleteProject } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
+import { exportProject, importProject } from "@/lib/import-export";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export function HomePage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const navigate = useNavigate()
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    getProjects().then(setProjects)
-  }, [])
+    getProjects().then(setProjects);
+  }, []);
 
   async function handleNewProject() {
-    const defaults = getSettings()
+    const defaults = getSettings();
     const project: Project = {
       id: crypto.randomUUID(),
-      name: 'Untitled Project',
+      name: "Untitled Project",
       sourceLang: defaults.defaultSourceLang,
       targetLang: defaults.defaultTargetLang,
-      context: '',
-      notes: '',
+      context: "",
+      notes: "",
       model: defaults.defaultModel,
       chunks: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    }
-    await saveProject(project)
-    navigate(`/project/${project.id}/settings`)
+    };
+    await saveProject(project);
+    navigate(`/project/${project.id}/settings`);
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
     try {
-      await importProject(file)
-      setProjects(await getProjects())
-      toast.success('Project imported')
+      await importProject(file);
+      setProjects(await getProjects());
+      toast.success("Project imported");
     } catch {
-      toast.error('Failed to import project. Invalid file format.')
+      toast.error("Failed to import project. Invalid file format.");
     }
-    e.target.value = ''
+    e.target.value = "";
   }
 
   async function handleDelete() {
-    if (!deleteTarget) return
-    await deleteProject(deleteTarget.id)
-    setProjects(await getProjects())
-    setDeleteTarget(null)
-    toast.success('Project deleted')
+    if (!deleteTarget) return;
+    await deleteProject(deleteTarget.id);
+    setProjects(await getProjects());
+    setDeleteTarget(null);
+    toast.success("Project deleted");
   }
 
   const sorted = [...projects].sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-  )
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-surface px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <h1 className="text-lg">
-            <span className="text-xl font-heading font-semibold">NovTran</span> — Translate a lot
+            <span className="text-xl font-heading font-semibold">NovTran</span>{" "}
+            — Translate a lot
           </h1>
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
@@ -98,7 +99,9 @@ export function HomePage() {
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-muted-foreground">Projects</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">
+            Projects
+          </h2>
           <div className="flex gap-2">
             <input
               ref={fileInputRef}
@@ -107,7 +110,11 @@ export function HomePage() {
               className="hidden"
               onChange={handleImport}
             />
-            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
               Import
             </Button>
             <Button size="sm" onClick={handleNewProject}>
@@ -137,10 +144,14 @@ export function HomePage() {
                       <p className="font-medium">{project.name}</p>
                       <div className="mt-1 flex items-center gap-3 text-xs text-fg-muted">
                         <Badge variant="secondary">
-                          {project.sourceLang.toUpperCase()} → {project.targetLang.toUpperCase()}
+                          {project.sourceLang.toUpperCase()} →{" "}
+                          {project.targetLang.toUpperCase()}
                         </Badge>
                         <span>{project.chunks.length} chunks</span>
-                        <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
+                        <span>
+                          Updated{" "}
+                          {new Date(project.updatedAt).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -152,7 +163,9 @@ export function HomePage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => exportProject(project)}>
+                        <DropdownMenuItem
+                          onClick={() => exportProject(project)}
+                        >
                           Export
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -171,12 +184,16 @@ export function HomePage() {
         )}
       </main>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete project</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deleteTarget?.name}"? This cannot be undone.
+              Are you sure you want to delete "{deleteTarget?.name}"? This
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -190,5 +207,5 @@ export function HomePage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
