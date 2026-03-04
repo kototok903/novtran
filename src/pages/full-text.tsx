@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 import type { Project } from '@/lib/types'
 import { getProject } from '@/lib/db'
 
@@ -11,7 +13,6 @@ export function FullTextPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [from, setFrom] = useState(1)
   const [to, setTo] = useState(1)
-  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (id)
@@ -38,30 +39,20 @@ export function FullTextPage() {
 
   async function handleCopy() {
     await navigator.clipboard.writeText(fullText)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    toast.success('Copied to clipboard')
   }
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-surface px-6 py-3">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              to={`/project/${id}`}
-              className="text-sm text-fg-muted hover:text-foreground"
-            >
-              &larr; Workspace
-            </Link>
-            <span className="text-fg-dim">|</span>
-            <h1 className="text-sm font-semibold">{project.name}</h1>
-          </div>
+          <Breadcrumbs items={[{ label: 'Projects', to: '/' }, { label: project.name, to: `/project/${id}` }, { label: 'Full Text' }]} />
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-fg-muted uppercase tracking-widest">
+          <h2 className="text-sm font-medium text-muted-foreground">
             Full Text View
           </h2>
           <Button
@@ -70,7 +61,7 @@ export function FullTextPage() {
             onClick={handleCopy}
             disabled={!fullText}
           >
-            {copied ? 'Copied!' : 'Copy to Clipboard'}
+            Copy to Clipboard
           </Button>
         </div>
 
@@ -100,7 +91,7 @@ export function FullTextPage() {
 
         {fullText ? (
           <div className="rounded-lg border border-border bg-surface p-8">
-            <div className="font-prose text-[15px] leading-[1.85]">
+            <div className="font-prose text-prose">
               {fullText.split('\n\n').map((para, i) => (
                 <p key={i} className="mb-4">
                   {para}

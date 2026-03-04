@@ -1,11 +1,15 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Eye, EyeOff } from 'lucide-react'
+import { toast } from 'sonner'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LanguageSelect } from '@/components/language-select'
 import { useSettings } from '@/hooks/use-settings'
 import { getApiKeys, saveApiKeys } from '@/lib/settings'
 import type { ApiKeys } from '@/lib/types'
+import { ModelSelect } from '@/components/model-select'
 
 const PROVIDERS: { key: keyof ApiKeys; label: string }[] = [
   { key: 'google', label: 'Google (Gemini)' },
@@ -17,41 +21,31 @@ export function SettingsPage() {
   const [settings, setSettings] = useSettings()
   const [apiKeys, setApiKeysState] = useState<ApiKeys>(getApiKeys)
   const [visible, setVisible] = useState<Record<string, boolean>>({})
-  const [saved, setSaved] = useState(false)
 
   function handleApiKeyChange(provider: keyof ApiKeys, value: string) {
     setApiKeysState((prev) => ({ ...prev, [provider]: value }))
-    setSaved(false)
   }
 
   function handleSave() {
     saveApiKeys(apiKeys)
-    setSaved(true)
+    toast.success('Settings saved')
   }
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-surface px-6 py-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to="/" className="text-sm text-fg-muted hover:text-foreground">
-              &larr; Projects
-            </Link>
-            <span className="text-fg-dim">|</span>
-            <h1 className="text-sm font-semibold">Settings</h1>
-          </div>
+          <Breadcrumbs items={[{ label: 'Projects', to: '/' }, { label: 'Settings' }]} />
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 py-8 space-y-10">
+      <main className="mx-auto max-w-2xl px-6 py-8 flex flex-col gap-10">
         {/* API Keys */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold text-fg-muted uppercase tracking-widest">
-            API Keys
-          </h2>
-          <div className="space-y-4">
+          <h2 className="mb-4 text-sm font-medium text-muted-foreground">API Keys</h2>
+          <div className="flex flex-col gap-4">
             {PROVIDERS.map(({ key, label }) => (
-              <div key={key} className="space-y-2">
+              <div key={key} className="flex flex-col gap-2">
                 <Label htmlFor={key}>{label}</Label>
                 <div className="flex gap-2">
                   <Input
@@ -63,11 +57,10 @@ export function SettingsPage() {
                   />
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="shrink-0"
+                    size="icon"
                     onClick={() => setVisible((v) => ({ ...v, [key]: !v[key] }))}
                   >
-                    {visible[key] ? 'Hide' : 'Show'}
+                    {visible[key] ? <EyeOff /> : <Eye />}
                   </Button>
                 </div>
               </div>
@@ -77,42 +70,39 @@ export function SettingsPage() {
 
         {/* Defaults */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold text-fg-muted uppercase tracking-widest">
-            Defaults
-          </h2>
-          <div className="space-y-4">
+          <h2 className="mb-4 text-sm font-medium text-muted-foreground">Defaults</h2>
+          <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="defaultSourceLang">Default Source Language</Label>
-                <Input
+                <LanguageSelect
                   id="defaultSourceLang"
                   value={settings.defaultSourceLang}
-                  onChange={(e) => setSettings({ defaultSourceLang: e.target.value })}
+                  onValueChange={(v) => setSettings({ defaultSourceLang: v })}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="defaultTargetLang">Default Target Language</Label>
-                <Input
+                <LanguageSelect
                   id="defaultTargetLang"
                   value={settings.defaultTargetLang}
-                  onChange={(e) => setSettings({ defaultTargetLang: e.target.value })}
+                  onValueChange={(v) => setSettings({ defaultTargetLang: v })}
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="defaultModel">Default Model</Label>
-              <Input
+              <ModelSelect
                 id="defaultModel"
                 value={settings.defaultModel}
-                onChange={(e) => setSettings({ defaultModel: e.target.value })}
+                onValueChange={(v) => setSettings({ defaultModel: v })}
               />
             </div>
           </div>
         </section>
 
-        <div className="flex items-center gap-3">
-          <Button onClick={handleSave}>Save API Keys</Button>
-          {saved && <span className="text-sm text-success">Saved</span>}
+        <div>
+          <Button onClick={handleSave}>Save</Button>
         </div>
       </main>
     </div>

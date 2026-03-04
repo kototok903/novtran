@@ -58,7 +58,13 @@
   --color-panel-source: var(--panel-source);
   --color-panel-translation: var(--panel-translation);
 
+  --font-heading: 'EB Garamond', 'Georgia', serif;
   --font-prose: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --text-prose: 15px;
+  --text-prose--line-height: 1.8;
+  --text-prose-sm: 14px;
+  --text-prose-sm--line-height: 1.7;
 }
 
 /* ===== Light theme: warm book-like palette ===== */
@@ -155,5 +161,11 @@
   body {
     @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .no-transitions,
+  .no-transitions *,
+  .no-transitions *::before,
+  .no-transitions *::after {
+    transition-duration: 0s !important;
   }
 }

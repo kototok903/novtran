@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, Link } from 'react-router'
+import { Settings, MoreVertical } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
@@ -10,18 +13,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { Project } from '@/lib/types'
 import { getProjects, saveProject, deleteProject } from '@/lib/db'
 import { getSettings } from '@/lib/settings'
 import { exportProject, importProject } from '@/lib/import-export'
-import { useSettings } from '@/hooks/use-settings'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export function HomePage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const [settings, setSettings] = useSettings()
 
   useEffect(() => {
     getProjects().then(setProjects)
@@ -51,8 +59,9 @@ export function HomePage() {
     try {
       await importProject(file)
       setProjects(await getProjects())
+      toast.success('Project imported')
     } catch {
-      alert('Failed to import project. Invalid file format.')
+      toast.error('Failed to import project. Invalid file format.')
     }
     e.target.value = ''
   }
@@ -62,6 +71,7 @@ export function HomePage() {
     await deleteProject(deleteTarget.id)
     setProjects(await getProjects())
     setDeleteTarget(null)
+    toast.success('Project deleted')
   }
 
   const sorted = [...projects].sort(
@@ -72,31 +82,15 @@ export function HomePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-surface px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <h1 className="text-lg font-semibold">novtran</h1>
+          <h1 className="text-lg">
+            <span className="text-xl font-heading font-semibold">NovTran</span> — Translate a lot
+          </h1>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-fg-muted text-sm hover:text-foreground"
-              onClick={() => {
-                if (settings.theme === 'dark') {
-                  document.documentElement.classList.remove('dark')
-                  setSettings({ theme: 'light' })
-                } else {
-                  document.documentElement.classList.add('dark')
-                  setSettings({ theme: 'dark' })
-                }
-              }}
-            >
-              {settings.theme === 'dark' ? 'Light' : 'Dark'}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-fg-muted hover:text-foreground"
-              onClick={() => navigate('/settings')}
-            >
-              Settings
+            <ThemeSwitcher />
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to="/settings">
+                <Settings className="size-4" />
+              </Link>
             </Button>
           </div>
         </div>
@@ -104,9 +98,7 @@ export function HomePage() {
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-fg-muted uppercase tracking-widest">
-            Projects
-          </h2>
+          <h2 className="text-sm font-medium text-muted-foreground">Projects</h2>
           <div className="flex gap-2">
             <input
               ref={fileInputRef}
@@ -136,7 +128,7 @@ export function HomePage() {
             {sorted.map((project) => (
               <Card
                 key={project.id}
-                className="cursor-pointer transition-colors hover:bg-surface-2"
+                className="cursor-pointer transition-colors"
                 onClick={() => navigate(`/project/${project.id}`)}
               >
                 <CardContent className="flex items-center justify-between py-4">
@@ -144,31 +136,33 @@ export function HomePage() {
                     <div>
                       <p className="font-medium">{project.name}</p>
                       <div className="mt-1 flex items-center gap-3 text-xs text-fg-muted">
-                        <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5">
+                        <Badge variant="secondary">
                           {project.sourceLang.toUpperCase()} → {project.targetLang.toUpperCase()}
-                        </span>
+                        </Badge>
                         <span>{project.chunks.length} chunks</span>
                         <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-sm text-fg-muted"
-                      onClick={() => exportProject(project)}
-                    >
-                      Export
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-sm text-destructive"
-                      onClick={() => setDeleteTarget(project)}
-                    >
-                      Delete
-                    </Button>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm">
+                          <MoreVertical className="text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => exportProject(project)}>
+                          Export
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setDeleteTarget(project)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </CardContent>
               </Card>

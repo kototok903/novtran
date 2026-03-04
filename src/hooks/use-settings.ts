@@ -6,7 +6,11 @@ export function useSettings() {
   const [settings, setSettingsState] = useState<Settings>(getSettings)
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', settings.theme === 'dark')
+    const root = document.documentElement
+    root.classList.add('no-transitions')
+    root.classList.toggle('dark', settings.theme === 'dark')
+    void root.offsetHeight
+    root.classList.remove('no-transitions')
     saveSettings(settings)
   }, [settings])
 
