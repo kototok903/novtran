@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Input } from '@/components/ui/input'
@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import type { Project } from '@/lib/types'
 import { getProject } from '@/lib/db'
+import { ThemeSwitcher } from '@/components/theme-switcher'
+import { Settings } from 'lucide-react'
 
 export function FullTextPage() {
   const { id } = useParams<{ id: string }>()
@@ -44,23 +46,28 @@ export function FullTextPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface px-6 py-3">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Breadcrumbs items={[{ label: 'Projects', to: '/' }, { label: project.name, to: `/project/${id}` }, { label: 'Full Text' }]} />
+      <header className="flex items-center justify-between border-b border-border bg-surface px-4 h-12">
+        <Breadcrumbs
+          items={[
+            { label: 'Projects', to: '/' },
+            { label: project.name, to: `/project/${id}` },
+            { label: 'Full Text' },
+          ]}
+        />
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link to={`/settings`}>
+              <Settings className="size-4" />
+            </Link>
+          </Button>
+          <ThemeSwitcher />
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Full Text View
-          </h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopy}
-            disabled={!fullText}
-          >
+          <h2 className="text-sm font-medium text-muted-foreground">Full Text View</h2>
+          <Button variant="outline" size="sm" onClick={handleCopy} disabled={!fullText}>
             Copy to Clipboard
           </Button>
         </div>

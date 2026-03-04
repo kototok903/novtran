@@ -16,16 +16,17 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Plus,
   Pencil,
   Check,
   ChevronDown,
   ChevronUp,
   Wrench,
+  X,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import { cn } from '@/lib/utils'
 
 type BottomTab = 'notes' | 'context' | 'prompt'
 
@@ -140,20 +141,14 @@ ${source}`
     <>
       {/* Source Panel */}
       <div className="flex w-1/2 min-h-0 flex-col border-r border-border bg-panel-source">
-        <div className="flex shrink-0 items-center border-b border-border bg-surface-2 px-4 py-1.5">
+        <div className="flex shrink-0 items-center border-b border-border bg-surface-2 px-4 h-9">
           <span className="text-xs font-medium text-muted-foreground">
             Source — {project.sourceLang.toUpperCase()}
           </span>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {chunk ? (
-            <div className="font-prose text-prose text-foreground/85">
-              {chunk.sourceText.split('\n\n').map((para, i) => (
-                <p key={i} className="mb-4">
-                  {para}
-                </p>
-              ))}
-            </div>
+            <div className="font-prose text-prose p-5 whitespace-pre-wrap">{chunk.sourceText}</div>
           ) : (
             <div className="flex h-full flex-col gap-3">
               <Textarea
@@ -173,64 +168,54 @@ ${source}`
             </div>
           )}
         </div>
-        {chunk && (
-          <div className="shrink-0 border-t border-border bg-surface-2 px-4 py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setChunkIndex(totalChunks)
-                setSourceInput('')
-              }}
-            >
-              <Plus className="size-3.5" />
-              New chunk
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Translation Panel */}
       <div className="flex w-1/2 min-h-0 flex-col bg-panel-translation">
-        <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface-2 px-4 py-1.5">
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface-2 px-4 h-9">
           <span className="text-xs font-medium text-muted-foreground">
             Translation — {project.targetLang.toUpperCase()}
           </span>
-          {chunk?.translatedText && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => {
-                if (editingTranslation) {
-                  handleSaveTranslation()
-                } else {
-                  setTranslationDraft(chunk.translatedText)
-                  setEditingTranslation(true)
-                }
-              }}
-            >
+          {chunk?.translatedText ? (
+            <div className="flex items-center gap-1">
               {editingTranslation ? (
-                <Check className="size-3.5" />
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => setEditingTranslation(false)}
+                  >
+                    <X className="size-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon-xs" onClick={() => handleSaveTranslation()}>
+                    <Check className="size-3.5" />
+                  </Button>
+                </>
               ) : (
-                <Pencil className="size-3.5" />
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => {
+                    setTranslationDraft(chunk.translatedText)
+                    setEditingTranslation(true)
+                  }}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
               )}
-            </Button>
-          )}
+            </div>
+          ) : null}
         </div>
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto">
           {editingTranslation ? (
             <Textarea
               value={translationDraft}
               onChange={(e) => setTranslationDraft(e.target.value)}
-              className="min-h-full resize-none font-prose text-prose"
+              className="min-h-full resize-none font-prose text-prose! whitespace-pre-wrap border-none rounded-none p-5"
             />
           ) : chunk?.translatedText ? (
-            <div className="font-prose text-prose">
-              {chunk.translatedText.split('\n\n').map((para, i) => (
-                <p key={i} className="mb-4">
-                  {para}
-                </p>
-              ))}
+            <div className="font-prose text-prose p-5 whitespace-pre-wrap">
+              {chunk.translatedText}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -248,18 +233,20 @@ ${source}`
       <header className="flex shrink-0 items-center justify-between border-b border-border bg-surface h-12 px-4">
         <div className="flex items-center gap-3">
           <Breadcrumbs items={[{ label: 'Projects', to: '/' }, { label: project.name }]} />
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link to={`/project/${id}/settings`}>
-              <Wrench className="size-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to={`/project/${id}/settings`}>
+                <Wrench className="size-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to={`/project/${id}/full-text`}>
+                <FileText className="size-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link to={`/project/${id}/full-text`}>
-              <FileText className="size-4" />
-            </Link>
-          </Button>
           <Button variant="ghost" size="icon-sm" asChild>
             <Link to={`/settings`}>
               <Settings className="size-4" />
@@ -299,10 +286,11 @@ ${source}`
             <span className="text-xs text-muted-foreground">of {totalChunks}</span>
           )}
         </div>
+
         <Button
           variant="ghost"
           size="sm"
-          disabled={chunkIndex >= totalChunks - 1}
+          disabled={chunkIndex >= totalChunks}
           onClick={() => setChunkIndex((i) => i + 1)}
         >
           Next
@@ -357,6 +345,29 @@ ${source}`
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize="25%" minSize="10%" maxSize="50%">
+              <BottomTabBar
+                bottomTab={bottomTab}
+                editingNotes={editingNotes}
+                editingContext={editingContext}
+                panelCollapsed={panelCollapsed}
+                onToggleEditNotes={() => {
+                  if (editingNotes) {
+                    handleSaveNotes()
+                  } else {
+                    setNotesDraft(project.notes)
+                    setEditingNotes(true)
+                  }
+                }}
+                onToggleEditContext={() => {
+                  if (editingContext) {
+                    handleSaveContext()
+                  } else {
+                    setContextDraft(project.context)
+                    setEditingContext(true)
+                  }
+                }}
+                onToggleCollapse={() => setPanelCollapsed((c) => !c)}
+              />
               <div className="flex-1 min-h-0 overflow-y-auto p-4">
                 <TabsContent value="notes" className="mt-0">
                   {editingNotes ? (
@@ -410,62 +421,83 @@ ${source}`
           </ResizablePanelGroup>
         )}
 
-        {/* Bottom Tab Bar — always visible */}
-        <div className="shrink-0 border-t border-border bg-surface">
-          <div className="flex items-center justify-between px-4">
-            <TabsList variant="line">
-              <TabsTrigger value="notes">Notes</TabsTrigger>
-              <TabsTrigger value="context">Context</TabsTrigger>
-              <TabsTrigger value="prompt">Prompt</TabsTrigger>
-            </TabsList>
-            <div className="flex items-center gap-1">
-              {bottomTab === 'notes' && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => {
-                    if (editingNotes) {
-                      handleSaveNotes()
-                    } else {
-                      setNotesDraft(project.notes)
-                      setEditingNotes(true)
-                    }
-                  }}
-                >
-                  {editingNotes ? <Check className="size-3.5" /> : <Pencil className="size-3.5" />}
-                </Button>
-              )}
-              {bottomTab === 'context' && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => {
-                    if (editingContext) {
-                      handleSaveContext()
-                    } else {
-                      setContextDraft(project.context)
-                      setEditingContext(true)
-                    }
-                  }}
-                >
-                  {editingContext ? (
-                    <Check className="size-3.5" />
-                  ) : (
-                    <Pencil className="size-3.5" />
-                  )}
-                </Button>
-              )}
-              <Button variant="ghost" size="icon-xs" onClick={() => setPanelCollapsed((c) => !c)}>
-                {panelCollapsed ? (
-                  <ChevronUp className="size-3.5" />
-                ) : (
-                  <ChevronDown className="size-3.5" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
+        {panelCollapsed && (
+          <BottomTabBar
+            bottomTab={bottomTab}
+            editingNotes={editingNotes}
+            editingContext={editingContext}
+            panelCollapsed={panelCollapsed}
+            onToggleEditNotes={() => {
+              if (editingNotes) {
+                handleSaveNotes()
+              } else {
+                setNotesDraft(project.notes)
+                setEditingNotes(true)
+              }
+            }}
+            onToggleEditContext={() => {
+              if (editingContext) {
+                handleSaveContext()
+              } else {
+                setContextDraft(project.context)
+                setEditingContext(true)
+              }
+            }}
+            onToggleCollapse={() => setPanelCollapsed((c) => !c)}
+          />
+        )}
       </Tabs>
+    </div>
+  )
+}
+
+type BottomTabBarProps = {
+  bottomTab: BottomTab
+  editingNotes: boolean
+  editingContext: boolean
+  panelCollapsed: boolean
+  onToggleEditNotes: () => void
+  onToggleEditContext: () => void
+  onToggleCollapse: () => void
+}
+
+function BottomTabBar({
+  bottomTab,
+  editingNotes,
+  editingContext,
+  panelCollapsed,
+  onToggleEditNotes,
+  onToggleEditContext,
+  onToggleCollapse,
+}: BottomTabBarProps) {
+  return (
+    <div className={cn('shrink-0 border-b border-border bg-surface', panelCollapsed && 'border-t')}>
+      <div className="flex items-center justify-between px-4">
+        <TabsList variant="line">
+          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="context">Context</TabsTrigger>
+          <TabsTrigger value="prompt">Prompt</TabsTrigger>
+        </TabsList>
+        <div className="flex items-center gap-1">
+          {bottomTab === 'notes' && (
+            <Button variant="ghost" size="icon-xs" onClick={onToggleEditNotes}>
+              {editingNotes ? <Check className="size-3.5" /> : <Pencil className="size-3.5" />}
+            </Button>
+          )}
+          {bottomTab === 'context' && (
+            <Button variant="ghost" size="icon-xs" onClick={onToggleEditContext}>
+              {editingContext ? <Check className="size-3.5" /> : <Pencil className="size-3.5" />}
+            </Button>
+          )}
+          <Button variant="ghost" size="icon-xs" onClick={onToggleCollapse}>
+            {panelCollapsed ? (
+              <ChevronUp className="size-3.5" />
+            ) : (
+              <ChevronDown className="size-3.5" />
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
