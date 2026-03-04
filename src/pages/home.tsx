@@ -1,0 +1,200 @@
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import type { Project } from '@/lib/types'
+import { getProjects, saveProject, deleteProject } from '@/lib/db'
+import { getSettings } from '@/lib/settings'
+import { exportProject, importProject } from '@/lib/import-export'
+import { useSettings } from '@/hooks/use-settings'
+
+export function HomePage() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
+  const [settings, setSettings] = useSettings()
+
+  useEffect(() => {
+    getProjects().then(setProjects)
+  }, [])
+
+  async function handleNewProject() {
+    const defaults = getSettings()
+    const project: Project = {
+      id: crypto.randomUUID(),
+      name: 'Untitled Project',
+      sourceLang: defaults.defaultSourceLang,
+      targetLang: defaults.defaultTargetLang,
+      context: '',
+      notes: '',
+      model: defaults.defaultModel,
+      chunks: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    await saveProject(project)
+    navigate(`/project/${project.id}/settings`)
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      await importProject(file)
+      setProjects(await getProjects())
+    } catch {
+      alert('Failed to import project. Invalid file format.')
+    }
+    e.target.value = ''
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    await deleteProject(deleteTarget.id)
+    setProjects(await getProjects())
+    setDeleteTarget(null)
+  }
+
+  const sorted = [...projects].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  )
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-surface px-6 py-4">
+        <div className="mx-auto flex max-w-4xl items-center justify-between">
+          <h1 className="text-lg font-semibold">novtran</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-fg-muted text-sm hover:text-foreground"
+              onClick={() => {
+                if (settings.theme === 'dark') {
+                  document.documentElement.classList.remove('dark')
+                  setSettings({ theme: 'light' })
+                } else {
+                  document.documentElement.classList.add('dark')
+                  setSettings({ theme: 'dark' })
+                }
+              }}
+            >
+              {settings.theme === 'dark' ? 'Light' : 'Dark'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-fg-muted hover:text-foreground"
+              onClick={() => navigate('/settings')}
+            >
+              Settings
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-4xl px-6 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-fg-muted uppercase tracking-widest">
+            Projects
+          </h2>
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImport}
+            />
+            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+              Import
+            </Button>
+            <Button size="sm" onClick={handleNewProject}>
+              New Project
+            </Button>
+          </div>
+        </div>
+
+        {sorted.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border py-16 text-center">
+            <p className="text-fg-muted">No projects yet</p>
+            <p className="mt-1 text-sm text-fg-dim">
+              Create a new project or import an existing one
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {sorted.map((project) => (
+              <Card
+                key={project.id}
+                className="cursor-pointer transition-colors hover:bg-surface-2"
+                onClick={() => navigate(`/project/${project.id}`)}
+              >
+                <CardContent className="flex items-center justify-between py-4">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <p className="font-medium">{project.name}</p>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-fg-muted">
+                        <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5">
+                          {project.sourceLang.toUpperCase()} → {project.targetLang.toUpperCase()}
+                        </span>
+                        <span>{project.chunks.length} chunks</span>
+                        <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-sm text-fg-muted"
+                      onClick={() => exportProject(project)}
+                    >
+                      Export
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-sm text-destructive"
+                      onClick={() => setDeleteTarget(project)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteTarget?.name}"? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
