@@ -21,7 +21,7 @@ import {
   X,
   Copy,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { ReadableTextarea } from "@/components/readable-textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   ResizablePanelGroup,
@@ -218,7 +218,7 @@ ${source}`;
               <Button
                 variant="ghost"
                 size="icon-xs"
-                disabled={!chunk}
+                disabled={!chunk || translating}
                 onClick={() => {
                   setTranslationDraft(chunk?.translatedText ?? "");
                   setEditingTranslation(true);
@@ -230,7 +230,7 @@ ${source}`;
             <Button
               variant="ghost"
               size="icon-xs"
-              disabled={!chunk?.translatedText}
+              disabled={!chunk?.translatedText || translating}
               onClick={() => handleCopy(chunk?.translatedText ?? "")}
             >
               <Copy className="size-3.5" />
@@ -238,24 +238,18 @@ ${source}`;
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {editingTranslation ? (
-            <Textarea
-              value={translationDraft}
-              placeholder="Translation will appear here after you press Translate."
-              onChange={(e) => setTranslationDraft(e.target.value)}
-              className="min-h-full resize-none font-prose text-prose! whitespace-pre-wrap border-none rounded-none p-5"
+          {chunk && (
+            <ReadableTextarea
+              editing={editingTranslation}
+              value={
+                editingTranslation ? translationDraft : chunk.translatedText
+              }
+              onChange={setTranslationDraft}
+              placeholderEdit="Translation will appear here after you press Translate."
+              placeholderRead="Translation will appear here after you press Translate."
+              className="font-prose text-prose! p-5 whitespace-pre-wrap"
             />
-          ) : chunk ? (
-            chunk.translatedText ? (
-              <div className="font-prose text-prose p-5 whitespace-pre-wrap">
-                {chunk.translatedText}
-              </div>
-            ) : (
-              <div className="font-prose text-prose p-5 text-muted-foreground">
-                Translation will appear here after you press Translate.
-              </div>
-            )
-          ) : null}
+          )}
         </div>
       </div>
     </>
@@ -403,46 +397,31 @@ ${source}`;
                 cancelEditContext={() => setEditingContext(false)}
                 onToggleCollapse={() => setPanelCollapsed((c) => !c)}
               />
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-surface">
-                <TabsContent value="notes" className="mt-0">
-                  {editingNotes ? (
-                    <Textarea
-                      value={notesDraft}
-                      onChange={(e) => setNotesDraft(e.target.value)}
-                      className="min-h-full resize-none text-prose-sm"
-                      placeholder="Translation notes (markdown)..."
-                    />
-                  ) : project.notes ? (
-                    <div className="prose-content text-prose-sm">
-                      <ReactMarkdown>{project.notes}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Notes will be populated by the AI after translation, or
-                      you can add them manually.
-                    </p>
-                  )}
+              <div className="flex-1 min-h-0 overflow-y-auto bg-surface">
+                <TabsContent value="notes" className="mt-0 h-full">
+                  <ReadableTextarea
+                    editing={editingNotes}
+                    value={editingNotes ? notesDraft : project.notes}
+                    onChange={setNotesDraft}
+                    placeholderEdit="Translation notes (markdown)..."
+                    placeholderRead="Notes will be populated by the AI after translation, or you can add them manually."
+                    markdown
+                    className="prose-content text-prose-sm! p-4"
+                  />
                 </TabsContent>
-                <TabsContent value="context" className="mt-0">
-                  {editingContext ? (
-                    <Textarea
-                      value={contextDraft}
-                      onChange={(e) => setContextDraft(e.target.value)}
-                      className="min-h-full resize-none text-prose-sm"
-                      placeholder="Translation instructions (markdown)..."
-                    />
-                  ) : project.context ? (
-                    <div className="rounded border border-border bg-surface-2 p-3 text-prose-sm">
-                      <ReactMarkdown>{project.context}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      No context provided.
-                    </p>
-                  )}
+                <TabsContent value="context" className="mt-0 h-full">
+                  <ReadableTextarea
+                    editing={editingContext}
+                    value={editingContext ? contextDraft : project.context}
+                    onChange={setContextDraft}
+                    placeholderEdit="Translation instructions (markdown)..."
+                    placeholderRead="No context provided."
+                    markdown
+                    className="prose-content text-prose-sm! p-4"
+                  />
                 </TabsContent>
-                <TabsContent value="prompt" className="mt-0">
-                  <div className="flex flex-col gap-2">
+                <TabsContent value="prompt" className="mt-0 h-full">
+                  <div className="flex flex-col gap-2 p-4">
                     <p className="text-xs text-muted-foreground">
                       Preview of the full prompt sent to the AI (read-only):
                     </p>
