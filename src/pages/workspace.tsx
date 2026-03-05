@@ -6,12 +6,9 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Chunk, Project } from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
-import { useSettings } from "@/hooks/use-settings";
 import { translateChunk } from "@/lib/translate";
 import { toast } from "sonner";
 import {
-  Sun,
-  Moon,
   FileText,
   Settings,
   ChevronLeft,
@@ -22,6 +19,7 @@ import {
   ChevronUp,
   Wrench,
   X,
+  Copy,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -31,12 +29,13 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/back-button";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 type BottomTab = "notes" | "context" | "prompt";
 
 export function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
-  const [settings, setSettings] = useSettings();
   const [project, setProject] = useState<Project | null>(null);
   const [chunkIndex, setChunkIndex] = useState(0);
   const [sourceInput, setSourceInput] = useState("");
@@ -66,7 +65,7 @@ export function WorkspacePage() {
   async function handleAddChunk() {
     if (!project || !sourceInput.trim()) return;
     const newChunk: Chunk = {
-      sourceText: sourceInput.trim(),
+      sourceText: sourceInput,
       translatedText: "",
       status: "pending",
     };
@@ -94,6 +93,11 @@ export function WorkspacePage() {
     if (!project) return;
     await persist({ ...project, context: contextDraft });
     setEditingContext(false);
+  }
+
+  async function handleCopy(text: string) {
+    await navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
   }
 
   async function handleTranslate() {
@@ -145,10 +149,20 @@ ${source}`;
     <>
       {/* Source Panel */}
       <div className="flex w-1/2 min-h-0 flex-col border-r border-border bg-panel-source">
-        <div className="flex shrink-0 items-center border-b border-border bg-surface-2 px-4 h-9">
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface-2 px-4 h-9">
           <span className="text-xs font-medium text-muted-foreground">
             Source — {project.sourceLang.toUpperCase()}
           </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              disabled={!chunk?.sourceText}
+              onClick={() => handleCopy(chunk?.sourceText ?? "")}
+            >
+              <Copy className="size-3.5" />
+            </Button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {chunk ? (
@@ -182,58 +196,66 @@ ${source}`;
           <span className="text-xs font-medium text-muted-foreground">
             Translation — {project.targetLang.toUpperCase()}
           </span>
-          {chunk?.translatedText ? (
-            <div className="flex items-center gap-1">
-              {editingTranslation ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => setEditingTranslation(false)}
-                  >
-                    <X className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => handleSaveTranslation()}
-                  >
-                    <Check className="size-3.5" />
-                  </Button>
-                </>
-              ) : (
+          <div className="flex items-center gap-1">
+            {editingTranslation ? (
+              <>
                 <Button
                   variant="ghost"
                   size="icon-xs"
-                  onClick={() => {
-                    setTranslationDraft(chunk.translatedText);
-                    setEditingTranslation(true);
-                  }}
+                  onClick={() => handleSaveTranslation()}
                 >
-                  <Pencil className="size-3.5" />
+                  <Check className="size-3.5" />
                 </Button>
-              )}
-            </div>
-          ) : null}
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setEditingTranslation(false)}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                disabled={!chunk}
+                onClick={() => {
+                  setTranslationDraft(chunk?.translatedText ?? "");
+                  setEditingTranslation(true);
+                }}
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              disabled={!chunk?.translatedText}
+              onClick={() => handleCopy(chunk?.translatedText ?? "")}
+            >
+              <Copy className="size-3.5" />
+            </Button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           {editingTranslation ? (
             <Textarea
               value={translationDraft}
+              placeholder="Translation will appear here after you press Translate."
               onChange={(e) => setTranslationDraft(e.target.value)}
               className="min-h-full resize-none font-prose text-prose! whitespace-pre-wrap border-none rounded-none p-5"
             />
-          ) : chunk?.translatedText ? (
-            <div className="font-prose text-prose p-5 whitespace-pre-wrap">
-              {chunk.translatedText}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {chunk
-                ? "Translation will appear here after you press Translate."
-                : ""}
-            </p>
-          )}
+          ) : chunk ? (
+            chunk.translatedText ? (
+              <div className="font-prose text-prose p-5 whitespace-pre-wrap">
+                {chunk.translatedText}
+              </div>
+            ) : (
+              <div className="font-prose text-prose p-5 text-muted-foreground">
+                Translation will appear here after you press Translate.
+              </div>
+            )
+          ) : null}
         </div>
       </div>
     </>
@@ -244,6 +266,7 @@ ${source}`;
       {/* Top Bar */}
       <header className="flex shrink-0 items-center justify-between border-b border-border bg-surface h-12 px-4">
         <div className="flex items-center gap-3">
+          <BackButton />
           <Breadcrumbs
             items={[{ label: "Projects", to: "/" }, { label: project.name }]}
           />
@@ -266,22 +289,7 @@ ${source}`;
               <Settings className="size-4" />
             </Link>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() =>
-              setSettings((prev) => ({
-                ...prev,
-                theme: prev.theme === "light" ? "dark" : "light",
-              }))
-            }
-          >
-            {settings.theme === "dark" ? (
-              <Sun className="size-4" />
-            ) : (
-              <Moon className="size-4" />
-            )}
-          </Button>
+          <ThemeSwitcher />
         </div>
       </header>
 
@@ -334,24 +342,20 @@ ${source}`;
           </div>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {chunk?.translatedText && (
+          {chunk && (
             <Button
-              variant="outline"
+              variant={chunk?.translatedText ? "outline" : "accent"}
               size="sm"
               disabled={translating}
               onClick={handleTranslate}
             >
-              {translating ? "Translating..." : "Re-translate"}
+              {translating
+                ? "Translating..."
+                : chunk?.translatedText
+                  ? "Re-translate"
+                  : "Translate"}
             </Button>
           )}
-          <Button
-            variant="accent"
-            size="sm"
-            disabled={!chunk || translating}
-            onClick={handleTranslate}
-          >
-            {translating ? "Translating..." : "Translate"}
-          </Button>
         </div>
       </div>
 
@@ -374,31 +378,32 @@ ${source}`;
               </div>
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize="25%" minSize="10%" maxSize="50%">
+            <ResizablePanel
+              defaultSize="25%"
+              minSize="10%"
+              maxSize="50%"
+              className="flex flex-col"
+            >
               <BottomTabBar
                 bottomTab={bottomTab}
                 editingNotes={editingNotes}
                 editingContext={editingContext}
                 panelCollapsed={panelCollapsed}
-                onToggleEditNotes={() => {
-                  if (editingNotes) {
-                    handleSaveNotes();
-                  } else {
-                    setNotesDraft(project.notes);
-                    setEditingNotes(true);
-                  }
+                editNotes={() => {
+                  setNotesDraft(project.notes);
+                  setEditingNotes(true);
                 }}
-                onToggleEditContext={() => {
-                  if (editingContext) {
-                    handleSaveContext();
-                  } else {
-                    setContextDraft(project.context);
-                    setEditingContext(true);
-                  }
+                editContext={() => {
+                  setContextDraft(project.context);
+                  setEditingContext(true);
                 }}
+                saveEditNotes={handleSaveNotes}
+                saveEditContext={handleSaveContext}
+                cancelEditNotes={() => setEditingNotes(false)}
+                cancelEditContext={() => setEditingContext(false)}
                 onToggleCollapse={() => setPanelCollapsed((c) => !c)}
               />
-              <div className="flex-1 min-h-0 overflow-y-auto p-4">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-surface">
                 <TabsContent value="notes" className="mt-0">
                   {editingNotes ? (
                     <Textarea
@@ -432,8 +437,7 @@ ${source}`;
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      No context set. Add translation instructions in Project
-                      Settings.
+                      No context provided.
                     </p>
                   )}
                 </TabsContent>
@@ -458,22 +462,18 @@ ${source}`;
             editingNotes={editingNotes}
             editingContext={editingContext}
             panelCollapsed={panelCollapsed}
-            onToggleEditNotes={() => {
-              if (editingNotes) {
-                handleSaveNotes();
-              } else {
-                setNotesDraft(project.notes);
-                setEditingNotes(true);
-              }
+            editNotes={() => {
+              setNotesDraft(project.notes);
+              setEditingNotes(true);
             }}
-            onToggleEditContext={() => {
-              if (editingContext) {
-                handleSaveContext();
-              } else {
-                setContextDraft(project.context);
-                setEditingContext(true);
-              }
+            editContext={() => {
+              setContextDraft(project.context);
+              setEditingContext(true);
             }}
+            saveEditNotes={handleSaveNotes}
+            saveEditContext={handleSaveContext}
+            cancelEditNotes={() => setEditingNotes(false)}
+            cancelEditContext={() => setEditingContext(false)}
             onToggleCollapse={() => setPanelCollapsed((c) => !c)}
           />
         )}
@@ -487,8 +487,12 @@ type BottomTabBarProps = {
   editingNotes: boolean;
   editingContext: boolean;
   panelCollapsed: boolean;
-  onToggleEditNotes: () => void;
-  onToggleEditContext: () => void;
+  editNotes: () => void;
+  editContext: () => void;
+  saveEditNotes: () => void;
+  saveEditContext: () => void;
+  cancelEditNotes: () => void;
+  cancelEditContext: () => void;
   onToggleCollapse: () => void;
 };
 
@@ -497,46 +501,70 @@ function BottomTabBar({
   editingNotes,
   editingContext,
   panelCollapsed,
-  onToggleEditNotes,
-  onToggleEditContext,
+  editNotes,
+  editContext,
+  saveEditNotes,
+  saveEditContext,
+  cancelEditNotes,
+  cancelEditContext,
   onToggleCollapse,
 }: BottomTabBarProps) {
   return (
     <div
       className={cn(
-        "shrink-0 border-b border-border bg-surface",
+        "shrink-0 border-b border-border bg-surface-2",
         panelCollapsed && "border-t"
       )}
     >
       <div className="flex items-center justify-between px-4">
         <TabsList variant="line">
-          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="notes">AI Notes</TabsTrigger>
           <TabsTrigger value="context">Context</TabsTrigger>
           <TabsTrigger value="prompt">Prompt</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-1">
-          {bottomTab === "notes" && (
-            <Button variant="ghost" size="icon-xs" onClick={onToggleEditNotes}>
-              {editingNotes ? (
-                <Check className="size-3.5" />
-              ) : (
+          {bottomTab === "notes" &&
+            (editingNotes ? (
+              <>
+                <Button variant="ghost" size="icon-xs" onClick={saveEditNotes}>
+                  <Check className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={cancelEditNotes}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="icon-xs" onClick={editNotes}>
                 <Pencil className="size-3.5" />
-              )}
-            </Button>
-          )}
-          {bottomTab === "context" && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={onToggleEditContext}
-            >
-              {editingContext ? (
-                <Check className="size-3.5" />
-              ) : (
+              </Button>
+            ))}
+          {bottomTab === "context" &&
+            (editingContext ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={saveEditContext}
+                >
+                  <Check className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={cancelEditContext}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="icon-xs" onClick={editContext}>
                 <Pencil className="size-3.5" />
-              )}
-            </Button>
-          )}
+              </Button>
+            ))}
           <Button variant="ghost" size="icon-xs" onClick={onToggleCollapse}>
             {panelCollapsed ? (
               <ChevronUp className="size-3.5" />

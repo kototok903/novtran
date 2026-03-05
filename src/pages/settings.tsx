@@ -10,6 +10,8 @@ import { useSettings } from "@/hooks/use-settings";
 import { getApiKeys, saveApiKeys } from "@/lib/settings";
 import type { ApiKeys } from "@/lib/types";
 import { ModelSelect } from "@/components/model-select";
+import { BackButton } from "@/components/back-button";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 const PROVIDERS: { key: keyof ApiKeys; label: string }[] = [
   { key: "google", label: "Google (Gemini)" },
@@ -33,11 +35,15 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface px-6 py-3">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
+      <header className="flex items-center justify-between border-b border-border bg-surface px-4 h-12">
+        <div className="flex items-center gap-3">
+          <BackButton />
           <Breadcrumbs
             items={[{ label: "Projects", to: "/" }, { label: "Settings" }]}
           />
+        </div>
+        <div className="flex items-center gap-1">
+          <ThemeSwitcher />
         </div>
       </header>
 

@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 import { getApiKey } from "@/lib/settings";
@@ -39,11 +39,12 @@ Translate the following text. Return:
 Source text:
 ${sourceText}`;
 
-  const { object } = await generateObject({
+  const result = await generateText({
     model: google(model),
-    schema: TranslationResultSchema,
+    output: Output.object({ schema: TranslationResultSchema }),
     prompt,
   });
+  if (import.meta.env.DEV) console.log("translateChunk result:", result);
 
-  return object;
+  return result.output;
 }

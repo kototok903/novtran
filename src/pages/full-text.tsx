@@ -9,6 +9,7 @@ import type { Project } from "@/lib/types";
 import { getProject } from "@/lib/db";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Settings } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 
 export function FullTextPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,13 +48,16 @@ export function FullTextPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b border-border bg-surface px-4 h-12">
-        <Breadcrumbs
-          items={[
-            { label: "Projects", to: "/" },
-            { label: project.name, to: `/project/${id}` },
-            { label: "Full Text" },
-          ]}
-        />
+        <div className="flex items-center gap-3">
+          <BackButton />
+          <Breadcrumbs
+            items={[
+              { label: "Projects", to: "/" },
+              { label: project.name, to: `/project/${id}` },
+              { label: "Full Text" },
+            ]}
+          />
+        </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon-sm" asChild>
             <Link to={`/settings`}>
