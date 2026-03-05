@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { Textarea } from "@/components/ui/textarea";
 import type { Chunk, Project } from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
 import { translateChunk } from "@/lib/translate";
@@ -39,8 +38,6 @@ export function WorkspacePage() {
   const [project, setProject] = useState<Project | null>(null);
   const [chunkIndex, setChunkIndex] = useState(0);
   const [sourceInput, setSourceInput] = useState("");
-  const [editingTranslation, setEditingTranslation] = useState(false);
-  const [translationDraft, setTranslationDraft] = useState("");
   const [bottomTab, setBottomTab] = useState<BottomTab>("notes");
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -75,12 +72,18 @@ export function WorkspacePage() {
     setSourceInput("");
   }
 
-  async function handleSaveTranslation() {
+  async function handleSaveSource(newValue: string) {
     if (!project || !chunk) return;
     const chunks = [...project.chunks];
-    chunks[chunkIndex] = { ...chunk, translatedText: translationDraft };
+    chunks[chunkIndex] = { ...chunk, sourceText: newValue };
     await persist({ ...project, chunks });
-    setEditingTranslation(false);
+  }
+
+  async function handleSaveTranslation(newValue: string) {
+    if (!project || !chunk) return;
+    const chunks = [...project.chunks];
+    chunks[chunkIndex] = { ...chunk, translatedText: newValue };
+    await persist({ ...project, chunks });
   }
 
   async function handleSaveNotes() {
@@ -147,111 +150,56 @@ ${source}`;
 
   const sourceTranslationPanels = (
     <>
-      {/* Source Panel */}
-      <div className="flex w-1/2 min-h-0 flex-col border-r border-border bg-panel-source">
-        <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface-2 px-4 h-9">
-          <span className="text-xs font-medium text-muted-foreground">
-            Source — {project.sourceLang.toUpperCase()}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              disabled={!chunk?.sourceText}
-              onClick={() => handleCopy(chunk?.sourceText ?? "")}
-            >
-              <Copy className="size-3.5" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5">
-          {chunk ? (
-            <div className="font-prose text-prose p-5 whitespace-pre-wrap">
-              {chunk.sourceText}
-            </div>
-          ) : (
-            <div className="flex h-full flex-col gap-3">
-              <Textarea
-                value={sourceInput}
-                onChange={(e) => setSourceInput(e.target.value)}
-                placeholder="Paste source text here to create a new chunk..."
-                className="min-h-[200px] flex-1 resize-none font-prose text-prose"
-              />
-              <Button
-                variant="accent"
-                onClick={handleAddChunk}
-                disabled={!sourceInput.trim()}
-                className="self-end"
-              >
-                Add Chunk
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Translation Panel */}
-      <div className="flex w-1/2 min-h-0 flex-col bg-panel-translation">
-        <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface-2 px-4 h-9">
-          <span className="text-xs font-medium text-muted-foreground">
-            Translation — {project.targetLang.toUpperCase()}
-          </span>
-          <div className="flex items-center gap-1">
-            {editingTranslation ? (
-              <>
+      <TextPanel
+        key={`source-${chunkIndex}`}
+        label={`Source — ${project.sourceLang.toUpperCase()}`}
+        value={chunk?.sourceText ?? ""}
+        onSave={handleSaveSource}
+        onCopy={() => handleCopy(chunk?.sourceText ?? "")}
+        copyDisabled={!chunk?.sourceText}
+        editDisabled={!chunk || translating}
+        placeholder="No source text."
+        className="border-r border-border bg-panel-source"
+        emptyState={
+          !chunk ? (
+            <div className="flex h-full flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <ReadableTextarea
+                  editing
+                  value={sourceInput}
+                  onChange={setSourceInput}
+                  placeholderEdit="Paste source text here to create a new chunk..."
+                  className="font-prose text-prose! p-5 whitespace-pre-wrap"
+                />
+              </div>
+              <div className="flex justify-end px-4 py-2 bg-surface-1 border-t">
                 <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => handleSaveTranslation()}
+                  variant="accent"
+                  onClick={handleAddChunk}
+                  disabled={!sourceInput.trim()}
                 >
-                  <Check className="size-3.5" />
+                  Add Chunk
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => setEditingTranslation(false)}
-                >
-                  <X className="size-3.5" />
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                disabled={!chunk || translating}
-                onClick={() => {
-                  setTranslationDraft(chunk?.translatedText ?? "");
-                  setEditingTranslation(true);
-                }}
-              >
-                <Pencil className="size-3.5" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              disabled={!chunk?.translatedText || translating}
-              onClick={() => handleCopy(chunk?.translatedText ?? "")}
-            >
-              <Copy className="size-3.5" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {chunk && (
-            <ReadableTextarea
-              editing={editingTranslation}
-              value={
-                editingTranslation ? translationDraft : chunk.translatedText
-              }
-              onChange={setTranslationDraft}
-              placeholderEdit="Translation will appear here after you press Translate."
-              placeholderRead="Translation will appear here after you press Translate."
-              className="font-prose text-prose! p-5 whitespace-pre-wrap"
-            />
-          )}
-        </div>
-      </div>
+              </div>
+            </div>
+          ) : undefined
+        }
+      />
+      <TextPanel
+        key={`translation-${chunkIndex}`}
+        label={`Translation — ${project.targetLang.toUpperCase()}`}
+        value={chunk?.translatedText ?? ""}
+        onSave={handleSaveTranslation}
+        onCopy={() => handleCopy(chunk?.translatedText ?? "")}
+        copyDisabled={!chunk?.translatedText || translating}
+        editDisabled={!chunk || translating}
+        placeholder={
+          chunk
+            ? "Translation will appear here after you press Translate."
+            : undefined
+        }
+        className="bg-panel-translation"
+      />
     </>
   );
 
@@ -461,6 +409,98 @@ ${source}`;
   );
 }
 
+type TextPanelProps = {
+  label: string;
+  value: string;
+  onSave: (newValue: string) => void | Promise<void>;
+  onCopy: () => void;
+  copyDisabled?: boolean;
+  editDisabled?: boolean;
+  placeholder?: string;
+  className?: string;
+  emptyState?: React.ReactNode;
+};
+
+function TextPanel({
+  label,
+  value,
+  onSave,
+  onCopy,
+  copyDisabled,
+  editDisabled,
+  placeholder,
+  className,
+  emptyState,
+}: TextPanelProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  return (
+    <div className={cn("flex w-1/2 min-h-0 flex-col", className)}>
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface-2 px-4 h-9">
+        <span className="text-xs font-medium text-muted-foreground">
+          {label}
+        </span>
+        <div className="flex items-center gap-1">
+          {editing ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={async () => {
+                  await onSave(draft);
+                  setEditing(false);
+                }}
+              >
+                <Check className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => setEditing(false)}
+              >
+                <X className="size-3.5" />
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              disabled={editDisabled}
+              onClick={() => {
+                setDraft(value);
+                setEditing(true);
+              }}
+            >
+              <Pencil className="size-3.5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            disabled={copyDisabled}
+            onClick={onCopy}
+          >
+            <Copy className="size-3.5" />
+          </Button>
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {emptyState ?? (
+          <ReadableTextarea
+            editing={editing}
+            value={editing ? draft : value}
+            onChange={setDraft}
+            placeholderEdit={placeholder}
+            placeholderRead={placeholder}
+            className="font-prose text-prose! p-5 whitespace-pre-wrap"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 type BottomTabBarProps = {
   bottomTab: BottomTab;
   editingNotes: boolean;
@@ -505,19 +545,30 @@ function BottomTabBar({
           {bottomTab === "notes" &&
             (editingNotes ? (
               <>
-                <Button variant="ghost" size="icon-xs" onClick={saveEditNotes}>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  disabled={panelCollapsed}
+                  onClick={saveEditNotes}
+                >
                   <Check className="size-3.5" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon-xs"
+                  disabled={panelCollapsed}
                   onClick={cancelEditNotes}
                 >
                   <X className="size-3.5" />
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" size="icon-xs" onClick={editNotes}>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                disabled={panelCollapsed}
+                onClick={editNotes}
+              >
                 <Pencil className="size-3.5" />
               </Button>
             ))}
@@ -527,6 +578,7 @@ function BottomTabBar({
                 <Button
                   variant="ghost"
                   size="icon-xs"
+                  disabled={panelCollapsed}
                   onClick={saveEditContext}
                 >
                   <Check className="size-3.5" />
@@ -534,13 +586,19 @@ function BottomTabBar({
                 <Button
                   variant="ghost"
                   size="icon-xs"
+                  disabled={panelCollapsed}
                   onClick={cancelEditContext}
                 >
                   <X className="size-3.5" />
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" size="icon-xs" onClick={editContext}>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                disabled={panelCollapsed}
+                onClick={editContext}
+              >
                 <Pencil className="size-3.5" />
               </Button>
             ))}
