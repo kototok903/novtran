@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS: Settings = {
     : "light",
   defaultSourceLang: "en",
   defaultTargetLang: "uk",
-  defaultModel: "gemini-2.0-flash",
+  defaultModel: "gemini-3-flash-preview",
 };
 
 export function getSettings(): Settings {
