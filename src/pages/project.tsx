@@ -25,6 +25,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -37,16 +44,22 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import {
   EMPTY_CHUNK_NAME,
   EMPTY_PROJECT_NAME,
+  type ChunkStatus,
   type Project,
 } from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
+
+// Temp, until "reviewed" status is implemented
+const EDITABLE_CHUNK_STATUSES = ["pending", "translated"] as const;
 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
-  const [renameChunkId, setRenameChunkId] = useState<string | null>(null);
+  const [editChunkId, setEditChunkId] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
+  const [statusDraft, setStatusDraft] =
+    useState<(typeof EDITABLE_CHUNK_STATUSES)[number]>("pending");
   const [deleteChunkId, setDeleteChunkId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,29 +72,34 @@ export function ProjectPage() {
     setProject(withTimestamp);
   }, []);
 
-  function openRenameDialog(chunkId: string) {
-    setRenameChunkId(chunkId);
-    setNameDraft(
-      project?.chunks.find((chunk) => chunk.id === chunkId)?.name ?? ""
-    );
+  function openEditDialog(chunkId: string) {
+    const chunk = project?.chunks.find((item) => item.id === chunkId);
+    if (!chunk) return;
+
+    setEditChunkId(chunkId);
+    setNameDraft(chunk.name);
+    setStatusDraft(chunk.status === "pending" ? "pending" : "translated");
   }
 
-  function closeRenameDialog() {
-    setRenameChunkId(null);
+  function closeEditDialog() {
+    setEditChunkId(null);
     setNameDraft("");
+    setStatusDraft("pending");
   }
 
-  async function handleRename() {
-    if (!project || renameChunkId === null) return;
-    const index = project.chunks.findIndex(
-      (chunk) => chunk.id === renameChunkId
-    );
+  async function handleEdit() {
+    if (!project || editChunkId === null) return;
+    const index = project.chunks.findIndex((chunk) => chunk.id === editChunkId);
     if (index < 0) return;
 
     const chunks = [...project.chunks];
-    chunks[index] = { ...chunks[index], name: nameDraft.trim() };
+    chunks[index] = {
+      ...chunks[index],
+      name: nameDraft.trim(),
+      status: statusDraft as ChunkStatus,
+    };
     await persist({ ...project, chunks });
-    closeRenameDialog();
+    closeEditDialog();
   }
 
   async function handleDelete() {
@@ -193,7 +211,7 @@ export function ProjectPage() {
                 canMoveUp={i > 0}
                 canMoveDown={i < project.chunks.length - 1}
                 onOpen={() => navigate(`/project/${id}/chunk/${chunk.id}`)}
-                onRename={() => openRenameDialog(chunk.id)}
+                onEdit={() => openEditDialog(chunk.id)}
                 onDelete={() => setDeleteChunkId(chunk.id)}
                 onMoveUp={() => moveChunk(chunk.id, -1)}
                 onMoveDown={() => moveChunk(chunk.id, 1)}
@@ -203,12 +221,14 @@ export function ProjectPage() {
         )}
       </main>
 
-      <RenameChunkDialog
-        open={renameChunkId !== null}
+      <EditChunkDialog
+        open={editChunkId !== null}
         nameDraft={nameDraft}
         onNameDraftChange={setNameDraft}
-        onClose={closeRenameDialog}
-        onSave={handleRename}
+        statusDraft={statusDraft}
+        onStatusDraftChange={setStatusDraft}
+        onClose={closeEditDialog}
+        onSave={handleEdit}
       />
 
       <DeleteChunkDialog
@@ -229,7 +249,7 @@ type ChunkRowProps = {
   canMoveUp: boolean;
   canMoveDown: boolean;
   onOpen: () => void;
-  onRename: () => void;
+  onEdit: () => void;
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -241,7 +261,7 @@ function ChunkRow({
   canMoveUp,
   canMoveDown,
   onOpen,
-  onRename,
+  onEdit,
   onDelete,
   onMoveUp,
   onMoveDown,
@@ -288,16 +308,16 @@ function ChunkRow({
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled={!canMoveUp} onClick={onMoveUp}>
                 <ChevronUp />
-                Move up
+                Move Up
               </DropdownMenuItem>
               <DropdownMenuItem disabled={!canMoveDown} onClick={onMoveDown}>
                 <ChevronDown />
-                Move down
+                Move Down
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onRename}>
+              <DropdownMenuItem onClick={onEdit}>
                 <Pencil />
-                Rename
+                Edit
               </DropdownMenuItem>
               <DropdownMenuItem variant="destructive" onClick={onDelete}>
                 <Trash2 />
@@ -311,28 +331,35 @@ function ChunkRow({
   );
 }
 
-type RenameChunkDialogProps = {
+type EditChunkDialogProps = {
   open: boolean;
   nameDraft: string;
   onNameDraftChange: (value: string) => void;
+  statusDraft: (typeof EDITABLE_CHUNK_STATUSES)[number];
+  onStatusDraftChange: (
+    value: (typeof EDITABLE_CHUNK_STATUSES)[number]
+  ) => void;
   onClose: () => void;
   onSave: () => void;
 };
 
-function RenameChunkDialog({
+function EditChunkDialog({
   open,
   nameDraft,
   onNameDraftChange,
+  statusDraft,
+  onStatusDraftChange,
   onClose,
   onSave,
-}: RenameChunkDialogProps) {
+}: EditChunkDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename chunk</DialogTitle>
+          <DialogTitle>Edit chunk</DialogTitle>
           <DialogDescription>
-            Update the chunk name shown in the project list.
+            Update the chunk name and translation status shown in the project
+            list.
           </DialogDescription>
         </DialogHeader>
         <Input
@@ -345,6 +372,25 @@ function RenameChunkDialog({
           autoFocus
           placeholder={EMPTY_CHUNK_NAME}
         />
+        <Select
+          value={statusDraft}
+          onValueChange={(value) =>
+            onStatusDraftChange(
+              value as (typeof EDITABLE_CHUNK_STATUSES)[number]
+            )
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            {EDITABLE_CHUNK_STATUSES.map((status) => (
+              <SelectItem key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <DialogFooter>
           <Button variant="secondary" onClick={onClose}>
             Cancel
