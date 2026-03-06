@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import type { Chunk, Project } from "@/lib/types";
+import { EMPTY_CHUNK_NAME, type Chunk, type Project } from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
 import { translateChunk } from "@/lib/translate";
 import { toast } from "sonner";
@@ -68,7 +68,7 @@ export function WorkspacePage() {
   async function handleAddChunk() {
     if (!project || !sourceInput.trim()) return;
     const newChunk: Chunk = {
-      name: "Untitled",
+      name: "",
       sourceText: sourceInput,
       translatedText: "",
       status: "pending",
@@ -225,7 +225,7 @@ ${source}`;
               {
                 label: isNewChunk
                   ? "-"
-                  : `${chunkIndex + 1}. ${chunk?.name ?? "Untitled"}`,
+                  : `${chunkIndex + 1}. ${chunk?.name || EMPTY_CHUNK_NAME}`,
               },
             ]}
           />

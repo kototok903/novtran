@@ -1,12 +1,12 @@
 import { z } from "zod";
-import type { Project } from "@/lib/types";
+import { CHUNK_STATUSES, type Project } from "@/lib/types";
 import { saveProject } from "@/lib/db";
 
 const ChunkSchema = z.object({
-  name: z.string().default("Untitled"),
+  name: z.string(),
   sourceText: z.string(),
   translatedText: z.string(),
-  status: z.enum(["pending", "translated", "reviewed"]),
+  status: z.enum(CHUNK_STATUSES),
 });
 
 const ProjectSchema = z.object({

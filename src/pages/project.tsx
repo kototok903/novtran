@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { Pencil, Trash2, Plus, Settings, FileText, Wrench } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Settings,
+  FileText,
+  Wrench,
+  MoreVertical,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -13,10 +22,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { BackButton } from "@/components/back-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import type { Project } from "@/lib/types";
+import { EMPTY_CHUNK_NAME, type Project } from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
 
 export function ProjectPage() {
@@ -139,7 +154,7 @@ export function ProjectPage() {
             </Button>
           </div>
         ) : (
-          <div>
+          <div className="grid gap-3">
             {project.chunks.map((chunk, i) => (
               <ChunkRow
                 key={i}
@@ -183,46 +198,59 @@ type ChunkRowProps = {
 };
 
 function ChunkRow({ index, chunk, onOpen, onRename, onDelete }: ChunkRowProps) {
+  const statusVariant =
+    chunk.status === "translated"
+      ? "success"
+      : chunk.status === "reviewed"
+        ? "accent"
+        : "outline";
+
   return (
-    <div
-      className="group flex cursor-pointer items-center gap-2 border-b border-border px-2 py-2.5 hover:bg-surface-2"
-      onClick={onOpen}
-    >
-      <span className="shrink-0 font-mono text-sm text-muted-foreground">
-        {index + 1}.
-      </span>
-      <div className="min-w-0 flex flex-1 items-center gap-6">
-        <span className="truncate text-sm font-medium">
-          {chunk.name || "Untitled"}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-          {chunk.sourceText.trim()}
-        </span>
-      </div>
-      <Badge
-        variant={
-          chunk.status === "translated"
-            ? "success"
-            : chunk.status === "reviewed"
-              ? "accent"
-              : "outline"
-        }
-        className="shrink-0 capitalize"
-      >
-        {chunk.status}
-      </Badge>
-      <div
-        className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Button variant="ghost" size="icon-xs" onClick={onRename}>
-          <Pencil className="size-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon-xs" onClick={onDelete}>
-          <Trash2 className="size-3.5" />
-        </Button>
-      </div>
-    </div>
+    <Card className="min-w-0 cursor-pointer transition-colors" onClick={onOpen}>
+      <CardContent className="flex items-center gap-3">
+        <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 font-mono text-sm text-muted-foreground self-end">
+                {index + 1}.
+              </span>
+              <p className="min-w-0 truncate font-medium">
+                {chunk.name || EMPTY_CHUNK_NAME}
+              </p>
+            </div>
+            <Badge variant={statusVariant} className="shrink-0 capitalize">
+              {chunk.status}
+            </Badge>
+          </div>
+
+          <div className="flex items-center">
+            <span className="min-w-0 text-xs text-muted-foreground truncate">
+              {chunk.sourceText.trim()}
+            </span>
+          </div>
+        </div>
+
+        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onRename}>
+                <Pencil />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                <Trash2 />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -258,7 +286,7 @@ function RenameChunkDialog({
             if (e.key === "Escape") onClose();
           }}
           autoFocus
-          placeholder="Untitled"
+          placeholder={EMPTY_CHUNK_NAME}
         />
         <DialogFooter>
           <Button variant="secondary" onClick={onClose}>
@@ -290,8 +318,8 @@ function DeleteChunkDialog({
         <DialogHeader>
           <DialogTitle>Delete chunk</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete "{chunkName || "Untitled"}"? This
-            cannot be undone.
+            Are you sure you want to delete "{chunkName || EMPTY_CHUNK_NAME}"?
+            This cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

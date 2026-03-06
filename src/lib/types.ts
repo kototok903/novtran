@@ -1,4 +1,7 @@
-export type ChunkStatus = "pending" | "translated" | "reviewed";
+export const CHUNK_STATUSES = ["pending", "translated", "reviewed"] as const;
+export type ChunkStatus = (typeof CHUNK_STATUSES)[number];
+
+export const EMPTY_CHUNK_NAME = "Untitled";
 
 export interface Chunk {
   name: string;
@@ -20,7 +23,8 @@ export interface Project {
   updatedAt: string;
 }
 
-export type Theme = "light" | "dark";
+export const THEMES = ["light", "dark"] as const;
+export type Theme = (typeof THEMES)[number];
 
 export interface Settings {
   theme: Theme;
