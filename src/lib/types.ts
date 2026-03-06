@@ -2,8 +2,11 @@ export const CHUNK_STATUSES = ["pending", "translated", "reviewed"] as const;
 export type ChunkStatus = (typeof CHUNK_STATUSES)[number];
 
 export const EMPTY_CHUNK_NAME = "Untitled";
+export const EMPTY_PROJECT_NAME = "Untitled";
+export const DEFAULT_PROJECT_NAME = "New Project";
 
 export interface Chunk {
+  id: string;
   name: string;
   sourceText: string;
   translatedText: string;

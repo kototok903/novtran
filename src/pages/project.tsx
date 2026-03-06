@@ -8,6 +8,8 @@ import {
   FileText,
   Wrench,
   MoreVertical,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,21 +28,26 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { BackButton } from "@/components/back-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { EMPTY_CHUNK_NAME, type Project } from "@/lib/types";
+import {
+  EMPTY_CHUNK_NAME,
+  EMPTY_PROJECT_NAME,
+  type Project,
+} from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
-  const [renameIndex, setRenameIndex] = useState<number | null>(null);
+  const [renameChunkId, setRenameChunkId] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
-  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const [deleteChunkId, setDeleteChunkId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) getProject(id).then((p) => setProject(p ?? null));
@@ -52,30 +59,50 @@ export function ProjectPage() {
     setProject(withTimestamp);
   }, []);
 
-  function openRenameDialog(index: number) {
-    setRenameIndex(index);
-    setNameDraft(project?.chunks[index]?.name ?? "");
+  function openRenameDialog(chunkId: string) {
+    setRenameChunkId(chunkId);
+    setNameDraft(
+      project?.chunks.find((chunk) => chunk.id === chunkId)?.name ?? ""
+    );
   }
 
   function closeRenameDialog() {
-    setRenameIndex(null);
+    setRenameChunkId(null);
     setNameDraft("");
   }
 
   async function handleRename() {
-    if (!project || renameIndex === null) return;
+    if (!project || renameChunkId === null) return;
+    const index = project.chunks.findIndex(
+      (chunk) => chunk.id === renameChunkId
+    );
+    if (index < 0) return;
+
     const chunks = [...project.chunks];
-    chunks[renameIndex] = { ...chunks[renameIndex], name: nameDraft.trim() };
+    chunks[index] = { ...chunks[index], name: nameDraft.trim() };
     await persist({ ...project, chunks });
     closeRenameDialog();
   }
 
   async function handleDelete() {
-    if (!project || deleteIndex === null) return;
-    const chunks = project.chunks.filter((_, i) => i !== deleteIndex);
+    if (!project || deleteChunkId === null) return;
+    const chunks = project.chunks.filter((chunk) => chunk.id !== deleteChunkId);
     await persist({ ...project, chunks });
-    setDeleteIndex(null);
+    setDeleteChunkId(null);
     toast.success("Chunk deleted");
+  }
+
+  async function moveChunk(chunkId: string, direction: -1 | 1) {
+    if (!project) return;
+
+    const index = project.chunks.findIndex((chunk) => chunk.id === chunkId);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= project.chunks.length)
+      return;
+
+    const chunks = [...project.chunks];
+    [chunks[index], chunks[nextIndex]] = [chunks[nextIndex], chunks[index]];
+    await persist({ ...project, chunks });
   }
 
   if (!project) return null;
@@ -90,7 +117,10 @@ export function ProjectPage() {
         <div className="flex items-center gap-3">
           <BackButton />
           <Breadcrumbs
-            items={[{ label: "Projects", to: "/" }, { label: project.name }]}
+            items={[
+              { label: "Projects", to: "/" },
+              { label: project.name || EMPTY_PROJECT_NAME },
+            ]}
           />
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon-sm" asChild>
@@ -157,12 +187,16 @@ export function ProjectPage() {
           <div className="grid gap-3">
             {project.chunks.map((chunk, i) => (
               <ChunkRow
-                key={i}
+                key={chunk.id}
                 index={i}
                 chunk={chunk}
-                onOpen={() => navigate(`/project/${id}/chunk/${i + 1}`)}
-                onRename={() => openRenameDialog(i)}
-                onDelete={() => setDeleteIndex(i)}
+                canMoveUp={i > 0}
+                canMoveDown={i < project.chunks.length - 1}
+                onOpen={() => navigate(`/project/${id}/chunk/${chunk.id}`)}
+                onRename={() => openRenameDialog(chunk.id)}
+                onDelete={() => setDeleteChunkId(chunk.id)}
+                onMoveUp={() => moveChunk(chunk.id, -1)}
+                onMoveDown={() => moveChunk(chunk.id, 1)}
               />
             ))}
           </div>
@@ -170,7 +204,7 @@ export function ProjectPage() {
       </main>
 
       <RenameChunkDialog
-        open={renameIndex !== null}
+        open={renameChunkId !== null}
         nameDraft={nameDraft}
         onNameDraftChange={setNameDraft}
         onClose={closeRenameDialog}
@@ -178,11 +212,11 @@ export function ProjectPage() {
       />
 
       <DeleteChunkDialog
-        open={deleteIndex !== null}
+        open={deleteChunkId !== null}
         chunkName={
-          deleteIndex !== null ? project.chunks[deleteIndex]?.name : ""
+          project.chunks.find((chunk) => chunk.id === deleteChunkId)?.name ?? ""
         }
-        onClose={() => setDeleteIndex(null)}
+        onClose={() => setDeleteChunkId(null)}
         onDelete={handleDelete}
       />
     </div>
@@ -192,12 +226,26 @@ export function ProjectPage() {
 type ChunkRowProps = {
   index: number;
   chunk: Project["chunks"][number];
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onOpen: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 };
 
-function ChunkRow({ index, chunk, onOpen, onRename, onDelete }: ChunkRowProps) {
+function ChunkRow({
+  index,
+  chunk,
+  canMoveUp,
+  canMoveDown,
+  onOpen,
+  onRename,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+}: ChunkRowProps) {
   const statusVariant =
     chunk.status === "translated"
       ? "success"
@@ -238,6 +286,15 @@ function ChunkRow({ index, chunk, onOpen, onRename, onDelete }: ChunkRowProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled={!canMoveUp} onClick={onMoveUp}>
+                <ChevronUp />
+                Move up
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={!canMoveDown} onClick={onMoveDown}>
+                <ChevronDown />
+                Move down
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onRename}>
                 <Pencil />
                 Rename

@@ -1,5 +1,6 @@
 import { openDB, type IDBPDatabase } from "idb";
 import type { Project } from "@/lib/types";
+import { normalizeProject } from "@/lib/normalize";
 
 const DB_NAME = "novtran";
 const DB_VERSION = 1;
@@ -22,12 +23,29 @@ function getDB() {
 
 export async function getProjects(): Promise<Project[]> {
   const db = await getDB();
-  return db.getAll(STORE_NAME);
+  const projects = await db.getAll(STORE_NAME);
+  const normalized = projects.map(normalizeProject);
+
+  await Promise.all(
+    normalized
+      .filter(({ changed }) => changed)
+      .map(({ value }) => db.put(STORE_NAME, value))
+  );
+
+  return normalized.map(({ value }) => value);
 }
 
 export async function getProject(id: string): Promise<Project | undefined> {
   const db = await getDB();
-  return db.get(STORE_NAME, id);
+  const project = await db.get(STORE_NAME, id);
+  if (!project) return undefined;
+
+  const normalized = normalizeProject(project);
+  if (normalized.changed) {
+    await db.put(STORE_NAME, normalized.value);
+  }
+
+  return normalized.value;
 }
 
 export async function saveProject(project: Project): Promise<void> {

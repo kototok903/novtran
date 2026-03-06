@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LanguageSelect } from "@/components/language-select";
 import { ModelSelect } from "@/components/model-select";
 import { toast } from "sonner";
-import type { Project } from "@/lib/types";
+import { EMPTY_PROJECT_NAME, type Project } from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
 import { Settings } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -45,7 +45,10 @@ export function ProjectSettingsPage() {
           <Breadcrumbs
             items={[
               { label: "Projects", to: "/" },
-              { label: project.name, to: `/project/${id}` },
+              {
+                label: project.name || EMPTY_PROJECT_NAME,
+                to: `/project/${id}`,
+              },
               { label: "Settings" },
             ]}
           />
@@ -72,6 +75,7 @@ export function ProjectSettingsPage() {
               id="name"
               value={project.name}
               onChange={(e) => update({ name: e.target.value })}
+              placeholder={EMPTY_PROJECT_NAME}
             />
           </div>
 

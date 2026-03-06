@@ -26,11 +26,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Project } from "@/lib/types";
+import {
+  DEFAULT_PROJECT_NAME,
+  EMPTY_PROJECT_NAME,
+  type Project,
+} from "@/lib/types";
 import { getProjects, saveProject, deleteProject } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { exportProject, importProject } from "@/lib/import-export";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { createProjectId } from "@/lib/ids";
 
 export function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -45,8 +50,8 @@ export function HomePage() {
   async function handleNewProject() {
     const defaults = getSettings();
     const project: Project = {
-      id: crypto.randomUUID(),
-      name: "Untitled Project",
+      id: createProjectId(),
+      name: DEFAULT_PROJECT_NAME,
       sourceLang: defaults.defaultSourceLang,
       targetLang: defaults.defaultTargetLang,
       context: "",
@@ -161,8 +166,9 @@ export function HomePage() {
           <DialogHeader>
             <DialogTitle>Delete project</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deleteTarget?.name}"? This
-              cannot be undone.
+              Are you sure you want to delete "
+              {deleteTarget?.name || EMPTY_PROJECT_NAME}"? This cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -194,7 +200,7 @@ function ProjectCard({ project, onOpen, onDelete }: ProjectCardProps) {
       <CardContent className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <div>
-            <p className="font-medium">{project.name}</p>
+            <p className="font-medium">{project.name || EMPTY_PROJECT_NAME}</p>
             <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
               <Badge variant="secondary">
                 {project.sourceLang.toUpperCase()} →{" "}

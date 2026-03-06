@@ -16,7 +16,7 @@ export default function App() {
           <Route path="/project/:id" element={<ProjectPage />} />
           <Route path="/project/:id/chunk/new" element={<WorkspacePage />} />
           <Route
-            path="/project/:id/chunk/:chunkIndex"
+            path="/project/:id/chunk/:chunkId"
             element={<WorkspacePage />}
           />
           <Route

@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import type { Project } from "@/lib/types";
+import { EMPTY_PROJECT_NAME, type Project } from "@/lib/types";
 import { getProject } from "@/lib/db";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Settings } from "lucide-react";
@@ -53,7 +53,10 @@ export function FullTextPage() {
           <Breadcrumbs
             items={[
               { label: "Projects", to: "/" },
-              { label: project.name, to: `/project/${id}` },
+              {
+                label: project.name || EMPTY_PROJECT_NAME,
+                to: `/project/${id}`,
+              },
               { label: "Full Text" },
             ]}
           />
@@ -103,7 +106,9 @@ export function FullTextPage() {
               onChange={(e) => setTo(Number(e.target.value))}
               className="w-20"
             />
-            <span className="text-xs text-dim-foreground">of {totalChunks}</span>
+            <span className="text-xs text-dim-foreground">
+              of {totalChunks}
+            </span>
           </div>
         )}
 

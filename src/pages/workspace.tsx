@@ -3,7 +3,12 @@ import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { EMPTY_CHUNK_NAME, type Chunk, type Project } from "@/lib/types";
+import {
+  EMPTY_CHUNK_NAME,
+  EMPTY_PROJECT_NAME,
+  type Chunk,
+  type Project,
+} from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
 import { translateChunk } from "@/lib/translate";
 import { toast } from "sonner";
@@ -30,13 +35,14 @@ import {
 import { cn } from "@/lib/utils";
 import { BackButton } from "@/components/back-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { createChunkId } from "@/lib/ids";
 
 type BottomTab = "notes" | "context" | "prompt";
 
 export function WorkspacePage() {
-  const { id, chunkIndex: chunkParam } = useParams<{
+  const { id, chunkId: chunkParam } = useParams<{
     id: string;
-    chunkIndex: string;
+    chunkId: string;
   }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
@@ -55,9 +61,27 @@ export function WorkspacePage() {
 
   const totalChunks = project?.chunks.length ?? 0;
   const isNewChunk = chunkParam === "new" || chunkParam === undefined;
-  const chunkIndex = isNewChunk ? totalChunks : Number(chunkParam) - 1;
+  const chunkIndex =
+    isNewChunk || !project
+      ? totalChunks
+      : project.chunks.findIndex((candidate) => candidate.id === chunkParam);
   const chunk: Chunk | undefined =
-    !isNewChunk && project ? project.chunks[chunkIndex] : undefined;
+    !isNewChunk && project && chunkIndex >= 0
+      ? project.chunks[chunkIndex]
+      : undefined;
+  const prevChunkId =
+    chunkIndex > 0 ? project?.chunks[chunkIndex - 1]?.id : undefined;
+  const nextChunkId =
+    !isNewChunk && chunkIndex >= 0 && chunkIndex + 1 < totalChunks
+      ? project?.chunks[chunkIndex + 1]?.id
+      : undefined;
+
+  useEffect(() => {
+    if (!id || !project || isNewChunk || chunkParam === undefined) return;
+    if (!chunk) {
+      navigate(`/project/${id}`, { replace: true });
+    }
+  }, [chunk, chunkParam, id, isNewChunk, navigate, project]);
 
   const persist = useCallback(async (updated: Project) => {
     const withTimestamp = { ...updated, updatedAt: new Date().toISOString() };
@@ -68,6 +92,7 @@ export function WorkspacePage() {
   async function handleAddChunk() {
     if (!project || !sourceInput.trim()) return;
     const newChunk: Chunk = {
+      id: createChunkId(),
       name: "",
       sourceText: sourceInput,
       translatedText: "",
@@ -76,9 +101,7 @@ export function WorkspacePage() {
     const updated = { ...project, chunks: [...project.chunks, newChunk] };
     await persist(updated);
     setSourceInput("");
-    navigate(`/project/${id}/chunk/${updated.chunks.length}`, {
-      replace: true,
-    });
+    navigate(`/project/${id}/chunk/${newChunk.id}`, { replace: true });
   }
 
   async function handleSaveSource(newValue: string) {
@@ -160,7 +183,7 @@ ${source}`;
   const sourceTranslationPanels = (
     <>
       <TextPanel
-        key={`source-${chunkIndex}`}
+        key={`source-${chunk?.id ?? "new"}`}
         label={`Source — ${project.sourceLang.toUpperCase()}`}
         value={chunk?.sourceText ?? ""}
         onSave={handleSaveSource}
@@ -195,7 +218,7 @@ ${source}`;
         }
       />
       <TextPanel
-        key={`translation-${chunkIndex}`}
+        key={`translation-${chunk?.id ?? "new"}`}
         label={`Translation — ${project.targetLang.toUpperCase()}`}
         value={chunk?.translatedText ?? ""}
         onSave={handleSaveTranslation}
@@ -221,7 +244,10 @@ ${source}`;
           <Breadcrumbs
             items={[
               { label: "Projects", to: "/" },
-              { label: project.name, to: `/project/${id}` },
+              {
+                label: project.name || EMPTY_PROJECT_NAME,
+                to: `/project/${id}`,
+              },
               {
                 label: isNewChunk
                   ? "-"
@@ -257,10 +283,14 @@ ${source}`;
         <Button
           variant="ghost"
           size="sm"
-          disabled={chunkIndex <= 0}
-          onClick={() =>
-            navigate(`/project/${id}/chunk/${chunkIndex}`, { replace: true })
-          }
+          disabled={!prevChunkId}
+          onClick={() => {
+            if (prevChunkId) {
+              navigate(`/project/${id}/chunk/${prevChunkId}`, {
+                replace: true,
+              });
+            }
+          }}
         >
           <ChevronLeft className="size-3.5" />
           Prev
@@ -279,13 +309,14 @@ ${source}`;
         <Button
           variant="ghost"
           size="sm"
-          disabled={isNewChunk}
+          disabled={!isNewChunk && !chunk}
           onClick={() => {
-            const next1 = chunkIndex + 2;
-            if (next1 > totalChunks) {
-              navigate(`/project/${id}/chunk/new`, { replace: true });
+            if (nextChunkId) {
+              navigate(`/project/${id}/chunk/${nextChunkId}`, {
+                replace: true,
+              });
             } else {
-              navigate(`/project/${id}/chunk/${next1}`, { replace: true });
+              navigate(`/project/${id}/chunk/new`, { replace: true });
             }
           }}
         >
