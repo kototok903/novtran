@@ -21,32 +21,53 @@ export function ReadableTextarea({
   markdown,
   className,
 }: ReadableTextareaProps) {
+  const frameClassName = cn(
+    "flex h-full min-h-0 flex-col border-[1.5px] rounded-none",
+    editing
+      ? "border-accent-warm/20 focus-within:border-accent-warm/60"
+      : "border-transparent"
+  );
+
   if (editing) {
     return (
-      <Textarea
-        value={value}
-        placeholder={placeholderEdit}
-        onChange={(e) => onChange?.(e.target.value)}
-        className={cn(
-          "min-h-full resize-none border-none rounded-none",
-          className
-        )}
-      />
+      <div className={frameClassName}>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <Textarea
+            value={value}
+            placeholder={placeholderEdit}
+            onChange={(e) => onChange?.(e.target.value)}
+            className={cn(
+              "min-h-full resize-none rounded-none border-0 shadow-none focus-visible:border-0 focus-visible:ring-0",
+              className
+            )}
+          />
+        </div>
+      </div>
     );
   }
 
   if (value) {
     return (
-      <div className={className}>
-        {markdown ? <ReactMarkdown>{value}</ReactMarkdown> : value}
+      <div className={frameClassName}>
+        <div className={cn("min-h-0 flex-1 overflow-y-auto", className)}>
+          {markdown ? <ReactMarkdown>{value}</ReactMarkdown> : value}
+        </div>
       </div>
     );
   }
 
   if (placeholderRead) {
     return (
-      <div className={cn(className, "text-muted-foreground")}>
-        {placeholderRead}
+      <div className={frameClassName}>
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto",
+            className,
+            "text-muted-foreground"
+          )}
+        >
+          {placeholderRead}
+        </div>
       </div>
     );
   }

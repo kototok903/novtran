@@ -172,7 +172,7 @@ ${source}`;
         emptyState={
           isNewChunk ? (
             <div className="flex h-full flex-col">
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 min-h-0">
                 <ReadableTextarea
                   editing
                   value={sourceInput}
@@ -371,7 +371,7 @@ ${source}`;
                 cancelEditContext={() => setEditingContext(false)}
                 onToggleCollapse={() => setPanelCollapsed((c) => !c)}
               />
-              <div className="flex-1 min-h-0 overflow-y-auto bg-surface">
+              <div className="flex-1 min-h-0 bg-surface">
                 <TabsContent value="notes" className="mt-0 h-full">
                   <ReadableTextarea
                     editing={editingNotes}
@@ -511,7 +511,7 @@ function TextPanel({
           </Button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0">
         {emptyState ?? (
           <ReadableTextarea
             editing={editing}
