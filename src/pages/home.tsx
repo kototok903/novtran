@@ -142,54 +142,12 @@ export function HomePage() {
         ) : (
           <div className="grid gap-3">
             {sorted.map((project) => (
-              <Card
+              <ProjectCard
                 key={project.id}
-                className="cursor-pointer transition-colors"
-                onClick={() => navigate(`/project/${project.id}`)}
-              >
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <p className="font-medium">{project.name}</p>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                        <Badge variant="secondary">
-                          {project.sourceLang.toUpperCase()} →{" "}
-                          {project.targetLang.toUpperCase()}
-                        </Badge>
-                        <span>{project.chunks.length} chunks</span>
-                        <span>
-                          Updated{" "}
-                          {new Date(project.updatedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm">
-                          <MoreVertical />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => exportProject(project)}
-                        >
-                          <Download />
-                          Export
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setDeleteTarget(project)}
-                        >
-                          <Trash2 />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
+                project={project}
+                onOpen={(projectId) => navigate(`/project/${projectId}`)}
+                onDelete={setDeleteTarget}
+              />
             ))}
           </div>
         )}
@@ -218,5 +176,60 @@ export function HomePage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+type ProjectCardProps = {
+  project: Project;
+  onOpen: (projectId: string) => void;
+  onDelete: (project: Project) => void;
+};
+
+function ProjectCard({ project, onOpen, onDelete }: ProjectCardProps) {
+  return (
+    <Card
+      className="cursor-pointer transition-colors"
+      onClick={() => onOpen(project.id)}
+    >
+      <CardContent className="flex items-center justify-between py-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <p className="font-medium">{project.name}</p>
+            <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+              <Badge variant="secondary">
+                {project.sourceLang.toUpperCase()} →{" "}
+                {project.targetLang.toUpperCase()}
+              </Badge>
+              <span>{project.chunks.length} chunks</span>
+              <span>
+                Updated {new Date(project.updatedAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <MoreVertical />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => exportProject(project)}>
+                <Download />
+                Export
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => onDelete(project)}
+              >
+                <Trash2 />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
