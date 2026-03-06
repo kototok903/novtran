@@ -122,7 +122,7 @@ export function ProjectSettingsPage() {
             <Button onClick={handleSave}>Save</Button>
             <div className="ml-auto">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => navigate(`/project/${id}`)}
               >
                 Go to Workspace

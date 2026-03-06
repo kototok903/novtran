@@ -236,7 +236,7 @@ ${source}`;
       </header>
 
       {/* Chunk Navigation Bar */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-surface-2 px-4 py-1.5">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-background px-4 py-1.5">
         <Button
           variant="ghost"
           size="sm"
@@ -286,7 +286,7 @@ ${source}`;
         <div className="ml-auto flex items-center gap-2">
           {chunk && (
             <Button
-              variant={chunk?.translatedText ? "outline" : "accent"}
+              variant={chunk?.translatedText ? "secondary" : "accent"}
               size="sm"
               disabled={translating}
               onClick={handleTranslate}
@@ -373,7 +373,7 @@ ${source}`;
                     <p className="text-xs text-muted-foreground">
                       Preview of the full prompt sent to the AI (read-only):
                     </p>
-                    <pre className="whitespace-pre-wrap rounded border border-border bg-surface-2 p-3 font-mono text-xs leading-relaxed text-muted-foreground">
+                    <pre className="whitespace-pre-wrap rounded border border-border bg-background p-3 font-mono text-xs leading-relaxed text-muted-foreground">
                       {buildPrompt()}
                     </pre>
                   </div>
@@ -437,7 +437,7 @@ function TextPanel({
 
   return (
     <div className={cn("flex w-1/2 min-h-0 flex-col", className)}>
-      <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface-2 px-4 h-9">
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-background px-4 h-9">
         <span className="text-xs font-medium text-muted-foreground">
           {label}
         </span>
@@ -531,7 +531,7 @@ function BottomTabBar({
   return (
     <div
       className={cn(
-        "shrink-0 border-b border-border bg-surface-2",
+        "shrink-0 border-b border-border bg-background",
         panelCollapsed && "border-t"
       )}
     >

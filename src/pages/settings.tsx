@@ -66,7 +66,7 @@ export function SettingsPage() {
                     placeholder={`Enter ${label} API key`}
                   />
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="icon"
                     onClick={() =>
                       setVisible((v) => ({ ...v, [key]: !v[key] }))

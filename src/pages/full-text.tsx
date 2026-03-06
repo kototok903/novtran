@@ -74,7 +74,7 @@ export function FullTextPage() {
             Full Text View
           </h2>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleCopy}
             disabled={!fullText}

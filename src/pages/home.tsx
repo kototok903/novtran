@@ -111,7 +111,7 @@ export function HomePage() {
               onChange={handleImport}
             />
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
             >
@@ -197,7 +197,7 @@ export function HomePage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
