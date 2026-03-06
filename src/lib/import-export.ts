@@ -3,6 +3,7 @@ import type { Project } from "@/lib/types";
 import { saveProject } from "@/lib/db";
 
 const ChunkSchema = z.object({
+  name: z.string().default("Untitled"),
   sourceText: z.string(),
   translatedText: z.string(),
   status: z.enum(["pending", "translated", "reviewed"]),

@@ -85,7 +85,7 @@ export function FullTextPage() {
 
         {totalChunks > 0 && (
           <div className="mb-6 flex items-center gap-3">
-            <Label className="text-xs text-fg-muted">Chunks</Label>
+            <Label className="text-xs text-muted-foreground">Chunks</Label>
             <Input
               type="number"
               min={1}
@@ -94,7 +94,7 @@ export function FullTextPage() {
               onChange={(e) => setFrom(Number(e.target.value))}
               className="w-20"
             />
-            <span className="text-xs text-fg-dim">to</span>
+            <span className="text-xs text-dim-foreground">to</span>
             <Input
               type="number"
               min={1}
@@ -103,7 +103,7 @@ export function FullTextPage() {
               onChange={(e) => setTo(Number(e.target.value))}
               className="w-20"
             />
-            <span className="text-xs text-fg-dim">of {totalChunks}</span>
+            <span className="text-xs text-dim-foreground">of {totalChunks}</span>
           </div>
         )}
 
@@ -119,8 +119,8 @@ export function FullTextPage() {
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-border py-16 text-center">
-            <p className="text-fg-muted">No translations yet</p>
-            <p className="mt-1 text-sm text-fg-dim">
+            <p className="text-muted-foreground">No translations yet</p>
+            <p className="mt-1 text-sm text-dim-foreground">
               Translate some chunks first, then come back here to see the full
               text
             </p>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -34,9 +34,12 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 type BottomTab = "notes" | "context" | "prompt";
 
 export function WorkspacePage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, chunkIndex: chunkParam } = useParams<{
+    id: string;
+    chunkIndex: string;
+  }>();
+  const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
-  const [chunkIndex, setChunkIndex] = useState(0);
   const [sourceInput, setSourceInput] = useState("");
   const [bottomTab, setBottomTab] = useState<BottomTab>("notes");
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -50,8 +53,11 @@ export function WorkspacePage() {
     if (id) getProject(id).then((p) => setProject(p ?? null));
   }, [id]);
 
-  const chunk: Chunk | undefined = project?.chunks[chunkIndex];
   const totalChunks = project?.chunks.length ?? 0;
+  const isNewChunk = chunkParam === "new" || chunkParam === undefined;
+  const chunkIndex = isNewChunk ? totalChunks : Number(chunkParam) - 1;
+  const chunk: Chunk | undefined =
+    !isNewChunk && project ? project.chunks[chunkIndex] : undefined;
 
   const persist = useCallback(async (updated: Project) => {
     const withTimestamp = { ...updated, updatedAt: new Date().toISOString() };
@@ -62,14 +68,17 @@ export function WorkspacePage() {
   async function handleAddChunk() {
     if (!project || !sourceInput.trim()) return;
     const newChunk: Chunk = {
+      name: "Untitled",
       sourceText: sourceInput,
       translatedText: "",
       status: "pending",
     };
     const updated = { ...project, chunks: [...project.chunks, newChunk] };
     await persist(updated);
-    setChunkIndex(updated.chunks.length - 1);
     setSourceInput("");
+    navigate(`/project/${id}/chunk/${updated.chunks.length}`, {
+      replace: true,
+    });
   }
 
   async function handleSaveSource(newValue: string) {
@@ -161,7 +170,7 @@ ${source}`;
         placeholder="No source text."
         className="border-r border-border bg-panel-source"
         emptyState={
-          !chunk ? (
+          isNewChunk ? (
             <div className="flex h-full flex-col">
               <div className="flex-1 overflow-y-auto">
                 <ReadableTextarea
@@ -210,7 +219,15 @@ ${source}`;
         <div className="flex items-center gap-3">
           <BackButton />
           <Breadcrumbs
-            items={[{ label: "Projects", to: "/" }, { label: project.name }]}
+            items={[
+              { label: "Projects", to: "/" },
+              { label: project.name, to: `/project/${id}` },
+              {
+                label: isNewChunk
+                  ? "-"
+                  : `${chunkIndex + 1}. ${chunk?.name ?? "Untitled"}`,
+              },
+            ]}
           />
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon-sm" asChild>
@@ -241,16 +258,18 @@ ${source}`;
           variant="ghost"
           size="sm"
           disabled={chunkIndex <= 0}
-          onClick={() => setChunkIndex((i) => i - 1)}
+          onClick={() =>
+            navigate(`/project/${id}/chunk/${chunkIndex}`, { replace: true })
+          }
         >
           <ChevronLeft className="size-3.5" />
           Prev
         </Button>
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium">
-            {totalChunks === 0 ? "No chunks" : `Chunk ${chunkIndex + 1}`}
+            {isNewChunk ? "New chunk" : `Chunk ${chunkIndex + 1}`}
           </span>
-          {totalChunks > 0 && (
+          {!isNewChunk && totalChunks > 0 && (
             <span className="text-xs text-muted-foreground">
               of {totalChunks}
             </span>
@@ -260,8 +279,15 @@ ${source}`;
         <Button
           variant="ghost"
           size="sm"
-          disabled={chunkIndex >= totalChunks}
-          onClick={() => setChunkIndex((i) => i + 1)}
+          disabled={isNewChunk}
+          onClick={() => {
+            const next1 = chunkIndex + 2;
+            if (next1 > totalChunks) {
+              navigate(`/project/${id}/chunk/new`, { replace: true });
+            } else {
+              navigate(`/project/${id}/chunk/${next1}`, { replace: true });
+            }
+          }}
         >
           Next
           <ChevronRight className="size-3.5" />

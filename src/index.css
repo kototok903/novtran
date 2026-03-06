@@ -48,8 +48,7 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
-  --color-fg-muted: var(--fg-muted);
-  --color-fg-dim: var(--fg-dim);
+  --color-dim-foreground: var(--dim-foreground);
   --color-accent-warm: var(--accent-warm);
   --color-accent-warm-hover: var(--accent-warm-hover);
   --color-accent-subtle: var(--accent-subtle);
@@ -99,8 +98,7 @@
   --surface: #fffdf9;
   --surface-2: #f0ece4;
   --surface-3: #e8e3d9;
-  --fg-muted: #7a6e5d;
-  --fg-dim: #a69b8a;
+  --dim-foreground: #a69b8a;
   --accent-warm: #b45309;
   --accent-warm-hover: #92400e;
   --accent-subtle: #fef3c7;
@@ -140,8 +138,7 @@
   --surface: #1a1918;
   --surface-2: #242320;
   --surface-3: #2e2d29;
-  --fg-muted: #9a917f;
-  --fg-dim: #6b6355;
+  --dim-foreground: #6b6355;
   --accent-warm: #d97706;
   --accent-warm-hover: #f59e0b;
   --accent-subtle: #422006;

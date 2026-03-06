@@ -113,7 +113,7 @@ export function ProjectSettingsPage() {
               placeholder="e.g. Translate in a literary, slightly archaic Ukrainian style. Prefer Ukrainian-origin words over Russian borrowings..."
               className="min-h-[160px] font-prose"
             />
-            <p className="text-xs text-fg-dim">
+            <p className="text-xs text-dim-foreground">
               Markdown instructions included in every translation prompt
             </p>
           </div>

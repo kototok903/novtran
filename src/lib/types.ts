@@ -1,6 +1,7 @@
 export type ChunkStatus = "pending" | "translated" | "reviewed";
 
 export interface Chunk {
+  name: string;
   sourceText: string;
   translatedText: string;
   status: ChunkStatus;

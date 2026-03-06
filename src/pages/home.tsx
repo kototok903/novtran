@@ -134,8 +134,8 @@ export function HomePage() {
 
         {sorted.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-16 text-center">
-            <p className="text-fg-muted">No projects yet</p>
-            <p className="mt-1 text-sm text-fg-dim">
+            <p className="text-muted-foreground">No projects yet</p>
+            <p className="mt-1 text-sm text-dim-foreground">
               Create a new project or import an existing one
             </p>
           </div>
@@ -151,7 +151,7 @@ export function HomePage() {
                   <div className="flex items-center gap-4">
                     <div>
                       <p className="font-medium">{project.name}</p>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-fg-muted">
+                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                         <Badge variant="secondary">
                           {project.sourceLang.toUpperCase()} →{" "}
                           {project.targetLang.toUpperCase()}

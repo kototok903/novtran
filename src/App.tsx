@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 import { Layout } from "@/components/layout";
 import { HomePage } from "@/pages/home";
+import { ProjectPage } from "@/pages/project";
 import { WorkspacePage } from "@/pages/workspace";
 import { ProjectSettingsPage } from "@/pages/project-settings";
 import { FullTextPage } from "@/pages/full-text";
@@ -12,7 +13,12 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/project/:id" element={<WorkspacePage />} />
+          <Route path="/project/:id" element={<ProjectPage />} />
+          <Route path="/project/:id/chunk/new" element={<WorkspacePage />} />
+          <Route
+            path="/project/:id/chunk/:chunkIndex"
+            element={<WorkspacePage />}
+          />
           <Route
             path="/project/:id/settings"
             element={<ProjectSettingsPage />}
