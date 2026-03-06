@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router";
-import { Settings, MoreVertical } from "lucide-react";
+import {
+  Settings,
+  MoreVertical,
+  Upload,
+  Plus,
+  Download,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,9 +122,11 @@ export function HomePage() {
               size="sm"
               onClick={() => fileInputRef.current?.click()}
             >
+              <Upload className="size-4" />
               Import
             </Button>
             <Button size="sm" onClick={handleNewProject}>
+              <Plus className="size-4" />
               New Project
             </Button>
           </div>
@@ -166,12 +175,14 @@ export function HomePage() {
                         <DropdownMenuItem
                           onClick={() => exportProject(project)}
                         >
+                          <Download />
                           Export
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
+                          variant="destructive"
                           onClick={() => setDeleteTarget(project)}
                         >
+                          <Trash2 />
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
