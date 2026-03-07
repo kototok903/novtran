@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   EMPTY_CHUNK_NAME,
   EMPTY_PROJECT_NAME,
   type Chunk,
@@ -55,6 +63,7 @@ export function WorkspacePage() {
   const [editingContext, setEditingContext] = useState(false);
   const [contextDraft, setContextDraft] = useState("");
   const [translating, setTranslating] = useState(false);
+  const [confirmRetranslateOpen, setConfirmRetranslateOpen] = useState(false);
 
   useEffect(() => {
     if (id) getProject(id).then((p) => setProject(p ?? null));
@@ -136,7 +145,7 @@ export function WorkspacePage() {
     toast.success("Copied to clipboard");
   }
 
-  async function handleTranslate() {
+  async function runTranslate() {
     if (!project || !chunk) return;
     setTranslating(true);
     try {
@@ -161,6 +170,15 @@ export function WorkspacePage() {
     } finally {
       setTranslating(false);
     }
+  }
+
+  function handleTranslate() {
+    if (!chunk) return;
+    if (chunk.translatedText) {
+      setConfirmRetranslateOpen(true);
+      return;
+    }
+    void runTranslate();
   }
 
   function buildPrompt(): string {
@@ -458,6 +476,37 @@ export function WorkspacePage() {
           />
         )}
       </Tabs>
+      <Dialog
+        open={confirmRetranslateOpen}
+        onOpenChange={setConfirmRetranslateOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Re-translate chunk?</DialogTitle>
+            <DialogDescription>
+              The current translation will be replaced. Make sure you have saved
+              anything you want to keep.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmRetranslateOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="accent"
+              onClick={() => {
+                setConfirmRetranslateOpen(false);
+                void runTranslate();
+              }}
+            >
+              Re-translate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
