@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/languages";
+
 export const CHUNK_STATUSES = ["pending", "translated", "reviewed"] as const;
 export type ChunkStatus = (typeof CHUNK_STATUSES)[number];
 
@@ -16,8 +18,8 @@ export interface Chunk {
 export interface Project {
   id: string;
   name: string;
-  sourceLang: string;
-  targetLang: string;
+  sourceLang: Language;
+  targetLang: Language;
   context: string;
   notes: string;
   model: string;
@@ -31,8 +33,8 @@ export type Theme = (typeof THEMES)[number];
 
 export interface Settings {
   theme: Theme;
-  defaultSourceLang: string;
-  defaultTargetLang: string;
+  defaultSourceLang: Language;
+  defaultTargetLang: Language;
   defaultModel: string;
 }
 

@@ -5,6 +5,8 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 import { getModelProvider, MODEL_PROVIDER_LABELS } from "@/lib/models";
 import { getApiKey } from "@/lib/settings";
+import { buildTranslationPrompt } from "@/lib/prompts";
+import type { Language } from "@/lib/languages";
 
 const TranslationResultSchema = z.object({
   translation: z.string(),
@@ -15,8 +17,8 @@ interface TranslateParams {
   sourceText: string;
   notes: string;
   context: string;
-  sourceLang: string;
-  targetLang: string;
+  sourceLang: Language;
+  targetLang: Language;
   model: string;
 }
 
@@ -51,17 +53,13 @@ function getTranslationModel(model: string) {
 export async function translateChunk(params: TranslateParams) {
   const { sourceText, notes, context, sourceLang, targetLang, model } = params;
 
-  const prompt = `You are a literary translator. Translate from ${sourceLang} to ${targetLang}.
-
-${context ? `${context}\n\n` : ""}Here are your accumulated notes about this text:
-${notes || "(no notes yet)"}
-
-Translate the following text. Return:
-1. The translation
-2. Updated notes — rewrite the full notes block. Preserve all existing notes. Only add or modify entries, never remove unless explicitly asked.
-
-Source text:
-${sourceText}`;
+  const prompt = buildTranslationPrompt({
+    sourceText,
+    sourceLang,
+    targetLang,
+    context,
+    notes,
+  });
 
   const result = await generateText({
     model: getTranslationModel(model),

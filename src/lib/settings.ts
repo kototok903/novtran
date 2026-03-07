@@ -1,10 +1,11 @@
 import type { ApiKeys, Settings } from "@/lib/types";
 import { DEFAULT_MODEL } from "@/lib/models";
+import { readLanguage } from "@/lib/languages";
 
 const SETTINGS_KEY = "novtran-settings";
 const API_KEYS_KEY = "novtran-api-keys";
 
-const DEFAULT_SETTINGS: Settings = {
+export const DEFAULT_SETTINGS: Settings = {
   theme: window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light",
@@ -16,7 +17,19 @@ const DEFAULT_SETTINGS: Settings = {
 export function getSettings(): Settings {
   const raw = localStorage.getItem(SETTINGS_KEY);
   if (!raw) return DEFAULT_SETTINGS;
-  return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  const parsed = JSON.parse(raw) as Partial<Settings>;
+  return {
+    ...DEFAULT_SETTINGS,
+    ...parsed,
+    defaultSourceLang: readLanguage(
+      parsed.defaultSourceLang,
+      DEFAULT_SETTINGS.defaultSourceLang
+    ),
+    defaultTargetLang: readLanguage(
+      parsed.defaultTargetLang,
+      DEFAULT_SETTINGS.defaultTargetLang
+    ),
+  };
 }
 
 export function saveSettings(settings: Settings): void {

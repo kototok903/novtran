@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { buildTranslationPrompt } from "@/lib/prompts";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -164,18 +165,13 @@ export function WorkspacePage() {
 
   function buildPrompt(): string {
     if (!project) return "";
-    const source = chunk?.sourceText ?? sourceInput;
-    return `System: You are a literary translator. Translate from ${project.sourceLang} to ${project.targetLang}.
-
-${project.context ? `${project.context}\n` : ""}Here are your accumulated notes about this text:
-${project.notes || "(no notes yet)"}
-
-Translate the following text. Return:
-1. The translation
-2. Updated notes — rewrite the full notes block. Preserve all existing notes. Only add or modify entries, never remove unless explicitly asked.
-
-Source text:
-${source}`;
+    return buildTranslationPrompt({
+      sourceText: chunk?.sourceText ?? sourceInput,
+      sourceLang: project.sourceLang,
+      targetLang: project.targetLang,
+      context: project.context,
+      notes: project.notes,
+    });
   }
 
   if (!project) return null;

@@ -5,6 +5,8 @@ import {
   type Project,
 } from "@/lib/types";
 import { createChunkId, createProjectId } from "@/lib/ids";
+import { readLanguage } from "@/lib/languages";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 type NormalizeResult<T> = {
   value: T;
@@ -76,8 +78,14 @@ export function normalizeProject(input: unknown): NormalizeResult<Project> {
   const normalized: Project = {
     id: readString(input.id) || createProjectId(),
     name: readString(input.name),
-    sourceLang: readString(input.sourceLang),
-    targetLang: readString(input.targetLang),
+    sourceLang: readLanguage(
+      input.sourceLang,
+      DEFAULT_SETTINGS.defaultSourceLang
+    ),
+    targetLang: readLanguage(
+      input.targetLang,
+      DEFAULT_SETTINGS.defaultTargetLang
+    ),
     context: readString(input.context),
     notes: readString(input.notes),
     model: readString(input.model),

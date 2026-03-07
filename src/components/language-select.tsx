@@ -5,24 +5,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const COMMON_LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "uk", label: "Ukrainian" },
-  { value: "ru", label: "Russian" },
-  { value: "de", label: "German" },
-  { value: "fr", label: "French" },
-  { value: "es", label: "Spanish" },
-  { value: "pl", label: "Polish" },
-  { value: "ja", label: "Japanese" },
-  { value: "zh", label: "Chinese" },
-  { value: "ko", label: "Korean" },
-];
+import {
+  LANG_NAMES,
+  LANGUAGES,
+  isLanguage,
+  type Language,
+} from "@/lib/languages";
 
 interface LanguageSelectProps {
   id?: string;
-  value: string;
-  onValueChange: (value: string) => void;
+  value: Language;
+  onValueChange: (value: Language) => void;
 }
 
 export function LanguageSelect({
@@ -31,14 +24,19 @@ export function LanguageSelect({
   onValueChange,
 }: LanguageSelectProps) {
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select
+      value={value}
+      onValueChange={(nextValue) => {
+        if (isLanguage(nextValue)) onValueChange(nextValue);
+      }}
+    >
       <SelectTrigger id={id}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {COMMON_LANGUAGES.map((lang) => (
-          <SelectItem key={lang.value} value={lang.value}>
-            {lang.label} ({lang.value.toUpperCase()})
+        {LANGUAGES.map((lang) => (
+          <SelectItem key={lang} value={lang}>
+            {LANG_NAMES[lang]} ({lang.toUpperCase()})
           </SelectItem>
         ))}
       </SelectContent>
