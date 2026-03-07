@@ -1,4 +1,5 @@
 import type { ApiKeys, Settings } from "@/lib/types";
+import { DEFAULT_MODEL } from "@/lib/models";
 
 const SETTINGS_KEY = "novtran-settings";
 const API_KEYS_KEY = "novtran-api-keys";
@@ -9,7 +10,7 @@ const DEFAULT_SETTINGS: Settings = {
     : "light",
   defaultSourceLang: "en",
   defaultTargetLang: "uk",
-  defaultModel: "gemini-3-flash-preview",
+  defaultModel: DEFAULT_MODEL,
 };
 
 export function getSettings(): Settings {

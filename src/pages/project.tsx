@@ -48,6 +48,7 @@ import {
   type Project,
 } from "@/lib/types";
 import { getProject, saveProject } from "@/lib/db";
+import { getModelLabel } from "@/lib/models";
 
 // Temp, until "reviewed" status is implemented
 const EDITABLE_CHUNK_STATUSES = ["pending", "translated"] as const;
@@ -173,7 +174,9 @@ export function ProjectPage() {
           <span>
             {project.chunks.length} chunks,&ensp;{translatedCount} translated
           </span>
-          <span className="text-dim-foreground">Model: {project.model}</span>
+          <span className="text-dim-foreground">
+            Model: {getModelLabel(project.model)}
+          </span>
         </div>
 
         {/* Chunk List Header */}
