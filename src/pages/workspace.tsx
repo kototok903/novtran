@@ -204,7 +204,7 @@ ${source}`;
                   className="font-prose text-prose! p-5 whitespace-pre-wrap"
                 />
               </div>
-              <div className="flex justify-end px-4 py-2 bg-surface-1 border-t">
+              <div className="flex justify-end px-4 py-2 border-t">
                 <Button
                   variant="accent"
                   onClick={handleAddChunk}
@@ -542,7 +542,7 @@ function TextPanel({
           </Button>
         </div>
       </div>
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 bg-surface">
         {emptyState ?? (
           <ReadableTextarea
             editing={editing}

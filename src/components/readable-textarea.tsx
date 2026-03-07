@@ -37,7 +37,7 @@ export function ReadableTextarea({
             placeholder={placeholderEdit}
             onChange={(e) => onChange?.(e.target.value)}
             className={cn(
-              "min-h-full resize-none rounded-none border-0 shadow-none focus-visible:border-0 focus-visible:ring-0",
+              "min-h-full resize-none rounded-none border-0 bg-transparent shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent",
               className
             )}
           />
