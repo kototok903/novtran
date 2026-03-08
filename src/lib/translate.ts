@@ -1,4 +1,4 @@
-import { generateText, Output } from "ai";
+import { Output, streamText } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -20,6 +20,7 @@ interface TranslateParams {
   sourceLang: Language;
   targetLang: Language;
   model: string;
+  onTranslation?: (translation: string) => void;
 }
 
 function getTranslationModel(model: string) {
@@ -51,7 +52,15 @@ function getTranslationModel(model: string) {
 }
 
 export async function translateChunk(params: TranslateParams) {
-  const { sourceText, notes, context, sourceLang, targetLang, model } = params;
+  const {
+    sourceText,
+    notes,
+    context,
+    sourceLang,
+    targetLang,
+    model,
+    onTranslation,
+  } = params;
 
   const prompt = buildTranslationPrompt({
     sourceText,
@@ -61,12 +70,20 @@ export async function translateChunk(params: TranslateParams) {
     notes,
   });
 
-  const result = await generateText({
+  const result = streamText({
     model: getTranslationModel(model),
     output: Output.object({ schema: TranslationResultSchema }),
     prompt,
   });
+
+  for await (const partial of result.partialOutputStream) {
+    if (typeof partial.translation === "string") {
+      onTranslation?.(partial.translation);
+    }
+  }
+
+  const output = await result.output;
   if (import.meta.env.DEV) console.log("translateChunk result:", result);
 
-  return result.output;
+  return output;
 }

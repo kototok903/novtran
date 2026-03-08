@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { buildTranslationPrompt } from "@/lib/prompts";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,10 @@ export function WorkspacePage() {
   const [editingContext, setEditingContext] = useState(false);
   const [contextDraft, setContextDraft] = useState("");
   const [translating, setTranslating] = useState(false);
+  const [streamedTranslation, setStreamedTranslation] = useState("");
+  const [streamingChunkId, setStreamingChunkId] = useState<string | null>(null);
   const [confirmRetranslateOpen, setConfirmRetranslateOpen] = useState(false);
+  const projectRef = useRef<Project | null>(null);
 
   useEffect(() => {
     if (id) getProject(id).then((p) => setProject(p ?? null));
@@ -94,6 +97,10 @@ export function WorkspacePage() {
       navigate(`/project/${id}`, { replace: true });
     }
   }, [chunk, chunkParam, id, isNewChunk, navigate, project]);
+
+  useEffect(() => {
+    projectRef.current = project;
+  }, [project]);
 
   const persist = useCallback(async (updated: Project) => {
     const withTimestamp = { ...updated, updatedAt: new Date().toISOString() };
@@ -150,7 +157,10 @@ export function WorkspacePage() {
 
   async function runTranslate() {
     if (!project || !chunk) return;
+    const translatingChunkId = chunk.id;
     setTranslating(true);
+    setStreamingChunkId(translatingChunkId);
+    setStreamedTranslation("");
     try {
       const result = await translateChunk({
         sourceText: chunk.sourceText,
@@ -159,19 +169,35 @@ export function WorkspacePage() {
         sourceLang: project.sourceLang,
         targetLang: project.targetLang,
         model: project.model,
+        onTranslation: (translation) => {
+          setStreamedTranslation(translation);
+        },
       });
-      const chunks = [...project.chunks];
-      chunks[chunkIndex] = {
-        ...chunk,
+      const latestProject = projectRef.current;
+      if (!latestProject) return;
+
+      const latestChunkIndex = latestProject.chunks.findIndex(
+        (candidate) => candidate.id === translatingChunkId
+      );
+      if (latestChunkIndex === -1) return;
+
+      const latestChunk = latestProject.chunks[latestChunkIndex];
+      const chunks = [...latestProject.chunks];
+      chunks[latestChunkIndex] = {
+        ...latestChunk,
         translatedText: result.translation,
         status: "translated",
       };
-      await persist({ ...project, chunks, notes: result.notes });
+      await persist({ ...latestProject, chunks, notes: result.notes });
       toast.success("Chunk translated");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Translation failed");
+      toast.error(
+        e instanceof Error ? `Error: ${e.message}` : "Translation failed"
+      );
     } finally {
       setTranslating(false);
+      setStreamingChunkId(null);
+      setStreamedTranslation("");
     }
   }
 
@@ -196,6 +222,12 @@ export function WorkspacePage() {
   }
 
   if (!project) return null;
+
+  const isStreamingCurrentChunk =
+    translating && chunk?.id !== undefined && streamingChunkId === chunk.id;
+  const displayedTranslation = isStreamingCurrentChunk
+    ? streamedTranslation
+    : (chunk?.translatedText ?? "");
 
   const sourceTranslationPanels = (
     <>
@@ -250,10 +282,10 @@ export function WorkspacePage() {
       <TextPanel
         key={`translation-${chunk?.id ?? "new"}`}
         label={`Translation — ${project.targetLang.toUpperCase()}`}
-        value={chunk?.translatedText ?? ""}
+        value={displayedTranslation}
         onSave={handleSaveTranslation}
-        onCopy={() => handleCopy(chunk?.translatedText ?? "")}
-        copyDisabled={!chunk?.translatedText || translating}
+        onCopy={() => handleCopy(displayedTranslation)}
+        copyDisabled={!displayedTranslation || translating}
         editDisabled={!chunk || translating}
         placeholder={
           chunk
@@ -262,7 +294,7 @@ export function WorkspacePage() {
         }
         className="bg-panel-translation"
         emptyState={
-          translating && !chunk?.translatedText ? (
+          isStreamingCurrentChunk && !streamedTranslation ? (
             <div className="flex h-full flex-col gap-4 p-5">
               <Skeleton className="w-full h-[15px]" />
               <Skeleton className="w-full h-[15px]" />
