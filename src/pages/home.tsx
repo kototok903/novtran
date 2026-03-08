@@ -7,6 +7,7 @@ import {
   Plus,
   Download,
   Trash2,
+  Github,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -99,6 +100,11 @@ export function HomePage() {
             — Translate a lot
           </h1>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon-sm" asChild>
+              <a href="https://github.com/kototok903/novtran" target="_blank">
+                <Github className="size-4" />
+              </a>
+            </Button>
             <ThemeSwitcher />
             <Button variant="ghost" size="icon-sm" asChild>
               <Link to="/settings">
