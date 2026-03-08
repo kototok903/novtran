@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { BackButton } from "@/components/back-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { createChunkId } from "@/lib/ids";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type BottomTab = "notes" | "context" | "prompt";
 
@@ -55,7 +56,8 @@ export function WorkspacePage() {
   }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
-  const [sourceInput, setSourceInput] = useState("");
+  const [newChunkName, setNewChunkName] = useState("");
+  const [newChunkSource, setNewChunkSource] = useState("");
   const [bottomTab, setBottomTab] = useState<BottomTab>("notes");
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -100,17 +102,18 @@ export function WorkspacePage() {
   }, []);
 
   async function handleAddChunk() {
-    if (!project || !sourceInput.trim()) return;
+    if (!project || !newChunkSource.trim()) return;
     const newChunk: Chunk = {
       id: createChunkId(),
-      name: "",
-      sourceText: sourceInput,
+      name: newChunkName.trim(),
+      sourceText: newChunkSource,
       translatedText: "",
       status: "pending",
     };
     const updated = { ...project, chunks: [...project.chunks, newChunk] };
     await persist(updated);
-    setSourceInput("");
+    setNewChunkName("");
+    setNewChunkSource("");
     navigate(`/project/${id}/chunk/${newChunk.id}`, { replace: true });
   }
 
@@ -184,7 +187,7 @@ export function WorkspacePage() {
   function buildPrompt(): string {
     if (!project) return "";
     return buildTranslationPrompt({
-      sourceText: chunk?.sourceText ?? sourceInput,
+      sourceText: chunk?.sourceText ?? newChunkSource,
       sourceLang: project.sourceLang,
       targetLang: project.targetLang,
       context: project.context,
@@ -209,11 +212,24 @@ export function WorkspacePage() {
         emptyState={
           isNewChunk ? (
             <div className="flex h-full flex-col">
+              <div className="min-h-0">
+                <ReadableTextarea
+                  editing
+                  rows={1}
+                  value={newChunkName}
+                  onChange={(v) => setNewChunkName(v.replaceAll("\n", ""))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.preventDefault();
+                  }}
+                  placeholderEdit="Chunk name..."
+                  className="font-prose text-prose! p-5 whitespace-pre field-sizing-fixed"
+                />
+              </div>
               <div className="flex-1 min-h-0">
                 <ReadableTextarea
                   editing
-                  value={sourceInput}
-                  onChange={setSourceInput}
+                  value={newChunkSource}
+                  onChange={setNewChunkSource}
                   placeholderEdit="Paste source text here to create a new chunk..."
                   className="font-prose text-prose! p-5 whitespace-pre-wrap"
                 />
@@ -222,7 +238,7 @@ export function WorkspacePage() {
                 <Button
                   variant="accent"
                   onClick={handleAddChunk}
-                  disabled={!sourceInput.trim()}
+                  disabled={!newChunkSource.trim()}
                 >
                   Add Chunk
                 </Button>
@@ -245,6 +261,15 @@ export function WorkspacePage() {
             : undefined
         }
         className="bg-panel-translation"
+        emptyState={
+          translating && !chunk?.translatedText ? (
+            <div className="flex h-full flex-col gap-4 p-5">
+              <Skeleton className="w-full h-[15px]" />
+              <Skeleton className="w-full h-[15px]" />
+              <Skeleton className="w-[60%] h-[15px]" />
+            </div>
+          ) : undefined
+        }
       />
     </>
   );
