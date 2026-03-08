@@ -2,14 +2,14 @@ import { getLangName, type Language } from "@/lib/languages";
 
 const TARGET_GUIDELINES: Partial<Record<Language, string>> = {
   ru: `Target language conventions:
-- Use — (em dash) for spoken dialogue.
-- Use «» (guillemets) for internal thoughts.
+- Use — for spoken dialogue.
+- Use «» for blocks of internal thought (wrap the entire thought sequence, not each line individually).
 - Track character gender in notes (grammatical gender).
 - Use the letter ё where standard orthography requires it.`,
 
   uk: `Target language conventions:
-- Use — (em dash) for spoken dialogue.
-- Use «» (guillemets) for internal thoughts.
+- Use — for spoken dialogue.
+- Use «» for blocks of internal thought (wrap the entire thought sequence, not each line individually).
 - Track character gender in notes (grammatical gender).`,
 };
 
@@ -48,12 +48,11 @@ ${notes || "(no notes yet)"}`,
 
     `Translate the following text. Return:
 1. The translation
-2. Updated notes — a concise glossary for translation consistency ONLY:
+2. Updated notes — ONLY items that could cause inconsistency between chunks:
    - Character names (original → translation/transliteration)
-   - Recurring terms, titles, honorifics and chosen equivalents
-   - Made-up or domain-specific terms
-   - Ambiguous terms where you made a specific choice
-   Format as a readable markdown list. Do NOT include summaries, analysis, or plot descriptions.`,
+   - Non-obvious translation choices you made
+   - Recurring invented/domain-specific terms and chosen equivalents
+   Format: original → equivalent. Keep it short. No obvious vocabulary, no explanations, no meta-commentary.`,
 
     `Source text:
 ${sourceText}`,
